@@ -1,0 +1,40 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Test the skill scripts
+        run: npm test
+      - name: Check every skill (catalog layout)
+        run: npm run check
+      # The plugin manifests must parse, name the same plugin and carry the same version.
+      - name: Check plugin manifests
+        run: |
+          node --input-type=module -e '
+          import { readFileSync } from "node:fs";
+          const read = (p) => JSON.parse(readFileSync(p, "utf8"));
+          const claude = read(".claude-plugin/plugin.json");
+          const codex = read("plugin.json");
+          const claudeMarket = read(".claude-plugin/marketplace.json");
+          const codexMarket = read(".agents/plugins/marketplace.json");
+          const fail = (m) => { console.error(m); process.exit(1); };
+          if (claude.name !== codex.name) fail(`plugin names differ: ${claude.name} vs ${codex.name}`);
+          if (claude.version !== codex.version) fail(`plugin versions differ: ${claude.version} vs ${codex.version}`);
+          for (const [file, market] of [[".claude-plugin/marketplace.json", claudeMarket], [".agents/plugins/marketplace.json", codexMarket]])
+            if (!market.plugins?.some((p) => p.name === claude.name)) fail(`${file} does not list ${claude.name}`);
+          console.log(`Manifests OK (${claude.name} ${claude.version}).`);
+          '

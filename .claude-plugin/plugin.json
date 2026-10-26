@@ -1,0 +1,10 @@
+{
+  "name": "agent-skills",
+  "version": "0.1.0",
+  "description": "Agent skills from Win Metta that work in both Claude Code and Codex, starting with skill-maintainer for creating and checking shared skills.",
+  "author": { "name": "Win Metta", "url": "https://winmetta.org" },
+  "homepage": "https://github.com/winmetta/agent-skills",
+  "repository": "https://github.com/winmetta/agent-skills",
+  "license": "MIT",
+  "keywords": ["skills", "agent-skills", "claude-code", "codex"]
+}

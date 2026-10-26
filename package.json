@@ -1,0 +1,14 @@
+{
+  "name": "@winmetta/agent-skills",
+  "private": true,
+  "description": "Agent skills for Claude Code, Codex and other AI coding agents. Installed with npx skills or as a plugin, not from npm.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test \"skills/**/*.test.mjs\"",
+    "check": "node skills/skill-maintainer/scripts/check-skills.mjs --catalog skills"
+  }
+}

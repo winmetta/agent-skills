@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Maintainer"
+  short_description: "Create skills shared by Claude Code and Codex"
+  default_prompt: "Use $skill-maintainer to create a skill for this repository that works in both Claude Code and Codex."
