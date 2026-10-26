@@ -6,6 +6,8 @@
 //                      relative symlink to ../../.agents/skills/<name>.
 //   catalog:           a skills repo publishing skills from one folder (e.g. skills/<name>/), no
 //                      symlinks; selected with --catalog <dir>.
+// Evals for a skill live beside the skills folder, never inside the skill, so installers do not
+// ship them: .agents/evals/<name>/ (project) or evals/<name>/ (catalog skills/).
 import { execFileSync } from 'node:child_process';
 import {
   existsSync,
@@ -14,7 +16,7 @@ import {
   readFileSync,
   readlinkSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { parseYamlSubset } from './yaml-subset.mjs';
 
 /** The git repository containing the working directory (or the directory itself). */
@@ -30,11 +32,16 @@ export function findRoot(cwd = process.cwd()) {
   }
 }
 
-/** Where skills live: `{ root, skillsDir, linkDir }`; linkDir is null in a catalog. */
+/** Where skills live: `{ root, skillsDir, linkDir, evalsDir }`; linkDir is null in a catalog. */
 export function layout({ root = findRoot(), catalog } = {}) {
-  return catalog
-    ? { root, skillsDir: catalog.replace(/\/+$/, ''), linkDir: null }
-    : { root, skillsDir: '.agents/skills', linkDir: '.claude/skills' };
+  const skillsDir = catalog ? catalog.replace(/\/+$/, '') : '.agents/skills';
+  const parent = dirname(skillsDir);
+  return {
+    root,
+    skillsDir,
+    linkDir: catalog ? null : '.claude/skills',
+    evalsDir: parent === '.' ? 'evals' : `${parent}/evals`,
+  };
 }
 
 /** The symlink target, relative to the link folder. */
@@ -180,6 +187,90 @@ export function openaiProblems(text, name) {
   return problems;
 }
 
+/** Text new-skill.mjs writes for the author to replace; prose inside code fences is ignored. */
+export function placeholderProblems(body) {
+  const problems = [];
+  let fence = null;
+  for (const [index, line] of body.split('\n').entries()) {
+    const marker = /^\s*(`{3,}|~{3,})/.exec(line)?.[1];
+    if (marker) {
+      if (!fence) fence = marker;
+      else if (marker[0] === fence[0] && marker.length >= fence.length) fence = null;
+      continue;
+    }
+    if (fence) continue;
+    if (/^\s*(?:\d+\.|-)\s+(?:…|\.\.\.|TODO\b.*)\s*$|\[TODO\b/.test(line) || line.includes('<!-- Imperative steps another agent'))
+      problems.push(`SKILL.md body line ${index + 1}: unfinished placeholder "${line.trim().slice(0, 40)}"`);
+  }
+  return problems;
+}
+
+/** Files in references/ that neither SKILL.md nor another reference mentions, so no agent reads them. */
+export function unroutedReferences(dir, skillText) {
+  const refs = join(dir, 'references');
+  if (!existsSync(refs)) return [];
+  const files = readdirSync(refs).filter((file) => !file.startsWith('.'));
+  const texts = files.map((file) => readFileSync(join(refs, file), 'utf8'));
+  return files.filter(
+    (file, i) =>
+      !skillText.includes(`references/${file}`) &&
+      !texts.some((text, j) => j !== i && text.includes(file)),
+  );
+}
+
+const isText = (value) => typeof value === 'string' && value.trim() !== '';
+
+/** Problems with <evalsDir>/<name>/evals.json (task evals) and triggers.json (description tests). */
+export function evalProblems(where, name) {
+  const errors = [];
+  const warnings = [];
+  const dir = join(where.root, where.evalsDir, name);
+  const shown = `${where.evalsDir}/${name}`;
+  const read = (file) => {
+    const path = join(dir, file);
+    if (!existsSync(path)) return undefined;
+    try {
+      return JSON.parse(readFileSync(path, 'utf8'));
+    } catch (error) {
+      errors.push(`${shown}/${file}: not valid JSON (${error.message})`);
+      return null;
+    }
+  };
+  const tasks = read('evals.json');
+  if (tasks) {
+    const at = (message) => errors.push(`${shown}/evals.json: ${message}`);
+    if (tasks.skill_name !== name) at(`skill_name must be "${name}"`);
+    if (!Array.isArray(tasks.evals) || !tasks.evals.length) at('evals must be a non-empty list');
+    const ids = new Set();
+    for (const [index, item] of (Array.isArray(tasks.evals) ? tasks.evals : []).entries()) {
+      const label = `evals[${index}]`;
+      if (!Number.isInteger(item?.id) || ids.has(item.id)) at(`${label}.id must be a unique integer`);
+      ids.add(item?.id);
+      if (!isText(item?.prompt)) at(`${label}.prompt is missing`);
+      for (const key of ['files', 'expectations'])
+        if (item?.[key] !== undefined && !(Array.isArray(item[key]) && item[key].every(isText)))
+          at(`${label}.${key} must be a list of strings`);
+      for (const file of Array.isArray(item?.files) ? item.files : [])
+        if (isText(file) && !existsSync(resolve(dir, file)))
+          at(`${label}.files: ${file} does not exist (paths are relative to ${shown}/)`);
+    }
+  }
+  const triggers = read('triggers.json');
+  if (triggers) {
+    const at = (message) => errors.push(`${shown}/triggers.json: ${message}`);
+    if (!Array.isArray(triggers) || !triggers.length) at('must be a non-empty list of { query, should_trigger }');
+    else {
+      for (const [index, item] of triggers.entries())
+        if (!isText(item?.query) || typeof item?.should_trigger !== 'boolean')
+          at(`[${index}] needs a query string and should_trigger true or false`);
+      const kinds = new Set(triggers.map((item) => item?.should_trigger));
+      if (!kinds.has(true) || !kinds.has(false))
+        warnings.push(`${shown}/triggers.json: include both should_trigger true and false queries`);
+    }
+  }
+  return { errors, warnings };
+}
+
 /** Problems with one skill folder; `warnings` do not fail the check. */
 export function checkSkill(where, name) {
   const errors = [];
@@ -229,7 +320,16 @@ export function checkSkill(where, name) {
       if (!existsSync(resolve(dir, target)))
         errors.push(at(`SKILL.md links to ${target}, which does not exist`));
     }
+    errors.push(...placeholderProblems(body).map(at));
+    for (const file of unroutedReferences(dir, body))
+      warnings.push(
+        at(`references/${file} is not mentioned in SKILL.md, so agents will not know to read it`),
+      );
   }
+
+  const evals = evalProblems(where, name);
+  errors.push(...evals.errors);
+  warnings.push(...evals.warnings);
 
   const openaiFile = join(dir, 'agents/openai.yaml');
   if (!existsSync(openaiFile))
@@ -273,7 +373,7 @@ function linkProblems(where, name) {
       ];
 }
 
-/** Skill folders, and stray entries in the Claude folder with no matching skill. */
+/** Skill folders, and stray entries (Claude folder or evals folder) with no matching skill. */
 export function listSkills(where) {
   const skillsPath = join(where.root, where.skillsDir);
   const names = existsSync(skillsPath)
@@ -290,5 +390,11 @@ export function listSkills(where) {
           (entry) => !names.includes(entry) && !entry.startsWith('.'),
         )
       : [];
-  return { names, strays };
+  const evalsPath = join(where.root, where.evalsDir);
+  const evalStrays = existsSync(evalsPath)
+    ? readdirSync(evalsPath).filter(
+        (entry) => !names.includes(entry) && !entry.startsWith('.'),
+      )
+    : [];
+  return { names, strays, evalStrays };
 }

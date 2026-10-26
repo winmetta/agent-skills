@@ -108,7 +108,10 @@ if (link) {
   symlinkSync(linkTarget(where, name), link, 'dir');
 }
 
-const { errors } = checkSkill(where, name);
+// The scaffold's own placeholders are expected until the author writes the body.
+const errors = checkSkill(where, name).errors.filter(
+  (error) => !error.includes('unfinished placeholder'),
+);
 console.log(
   `Created ${where.skillsDir}/${name}/ (SKILL.md, agents/openai.yaml${resources.map((r) => `, ${r}/`).join('')})`,
 );
@@ -116,5 +119,5 @@ if (link)
   console.log(`Linked ${where.linkDir}/${name} -> ${linkTarget(where, name)}`);
 if (errors.length) console.error(`Fix before committing:\n${errors.join('\n')}`);
 console.log(
-  'Next: write the SKILL.md body and resources, then run check-skills.mjs. Git does not keep empty folders; remove resource folders you do not fill.',
+  'Next: replace the placeholders in SKILL.md, add resources, then run check-skills.mjs (it fails until the placeholders are gone). Git does not keep empty folders; remove resource folders you do not fill.',
 );

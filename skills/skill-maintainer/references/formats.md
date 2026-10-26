@@ -1,6 +1,6 @@
 # Skill formats for Claude Code and Codex
 
-Checked on 2026-10-25 against the sources at the end. Re-check them before relying on a detail that may have changed (field names, paths, limits).
+Checked on 2026-10-25 (sources added 2026-10-26) against the sources at the end. Re-check them before relying on a detail that may have changed (field names, paths, limits).
 
 ## Contents
 
@@ -43,7 +43,7 @@ Extra constraints from OpenAI's `skill-creator` validator (`quick_validate.py`):
 Description tips (both tools choose skills from `name` + `description` only, before reading the body):
 
 - Lead with what it does, then "Use when …" with the phrases users type.
-- Name the repo's own nouns (Dhamma post, retreat, tag) so the right skill wins.
+- Name the domain's own nouns (blog post, migration, release) so the right skill wins. More in [writing.md](writing.md).
 - Keep "when to use" out of the body.
 
 ## 3. `agents/openai.yaml` (Codex)
@@ -111,6 +111,8 @@ A skill that only one repo needs (its own conventions) belongs in that repo. A s
 
 - OpenAI, Build skills (Codex): https://learn.chatgpt.com/docs/build-skills (formerly developers.openai.com/codex/skills)
 - OpenAI `skill-creator` (system skill; `SKILL.md`, `references/openai_yaml.md`, `scripts/quick_validate.py`, `scripts/generate_openai_yaml.py`): https://github.com/openai/skills/tree/main/skills/.system/skill-creator (Apache-2.0; read at commit 4ab6e0f, 2026-02-09)
+- Anthropic `skill-creator` (`SKILL.md`, `references/schemas.md`, `agents/grader.md`, `agents/comparator.md`, `agents/analyzer.md`): https://github.com/anthropics/skills/tree/main/skills/skill-creator (Apache-2.0; read 2026-10-26). Source of the testing, grading, improvement and description-tuning ideas in writing.md and testing.md, which paraphrase it; the `grading.json` field names match it.
+- OpenAI `skill-creator`, current `SKILL.md` (principles on scope, freedom, progressive disclosure and forward-testing, and the TODO-placeholder check) and `skill-installer` (read 2026-10-26).
 - Agent Skills specification: https://agentskills.io/specification
 - Claude Code, Skills: https://code.claude.com/docs/en/skills
 - Claude Code, plugin marketplaces: https://code.claude.com/docs/en/plugin-marketplaces

@@ -14,7 +14,7 @@ const { values } = parseArgs({
   },
 });
 const where = layout({ catalog: values.catalog });
-const { names, strays } = listSkills(where);
+const { names, strays, evalStrays } = listSkills(where);
 const ignored = new Set(values.ignore);
 const errors = [];
 const warnings = [];
@@ -27,6 +27,10 @@ for (const name of checked) {
 for (const stray of strays.filter((name) => !ignored.has(name)))
   errors.push(
     `${where.linkDir}/${stray}: no matching ${where.skillsDir}/${stray}; move the skill to ${where.skillsDir}/ and replace this with a symlink, so every agent gets it`,
+  );
+for (const stray of evalStrays.filter((name) => !ignored.has(name)))
+  errors.push(
+    `${where.evalsDir}/${stray}: no skill named ${stray}; rename or remove these evals`,
   );
 
 for (const warning of warnings) console.warn(`warning: ${warning}`);

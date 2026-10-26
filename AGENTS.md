@@ -8,6 +8,7 @@ A public catalog of agent skills that work in Claude Code, Codex and other agent
   - `SKILL.md`: frontmatter `name` and `description` only. `name` equals the folder name.
   - `agents/openai.yaml`: Codex UI metadata, every string double-quoted.
   - Optional `references/`, `scripts/` and `assets/`.
+- `evals/<name>/`: optional evals for a skill (`evals.json`, `triggers.json`), kept outside the skill folder so installers don't ship them. See `skills/skill-maintainer/references/testing.md`.
 - `.claude-plugin/marketplace.json` and `.claude-plugin/plugin.json`: the Claude Code marketplace `winmetta` and the plugin `agent-skills`, whose root is this repository.
 - `plugin.json` and `.agents/plugins/marketplace.json`: the same plugin for Codex.
 - `package.json`: scripts only (`npm test`, `npm run check`). Nothing is published to npm.
@@ -18,7 +19,7 @@ The format rules for skills, and how each tool finds and installs them, are in `
 
 1. Branch from `main`.
 2. Scaffold it: `node skills/skill-maintainer/scripts/new-skill.mjs <name> --catalog skills --description "…" --display-name "…" --short-description "…" --default-prompt 'Use $<name> to …'`.
-3. Write the skill. Keep it general: no organisation-specific paths, names or rules.
+3. Write the skill, following `skills/skill-maintainer/references/writing.md`. Keep it general: no organisation-specific paths, names or rules. Test it on realistic requests (`references/testing.md`).
 4. Scripts use Node 20+ with no npm dependencies, so they run wherever the skill is installed. Give scripts `node:test` tests next to them (`*.test.mjs`).
 5. Run `npm test` and `npm run check`. CI runs the tests on Node 20 (the oldest supported version) and Node 24, runs the check, and checks the plugin manifests. Never use a test-runner glob (`node --test "**/*.test.mjs"`): Node 20 doesn't support it, which is why `scripts/run-tests.mjs` lists the files.
 6. Add the skill to the list in `README.md`.

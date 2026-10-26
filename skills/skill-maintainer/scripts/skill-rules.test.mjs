@@ -18,8 +18,10 @@ import {
   descriptionProblems,
   nameProblems,
   openaiProblems,
+  placeholderProblems,
   readSkillFile,
 } from './skill-rules.mjs';
+import { summarize, toMarkdown } from './summarize-evals.mjs';
 import { parseYamlSubset, YamlSubsetError } from './yaml-subset.mjs';
 
 const scripts = dirname(fileURLToPath(import.meta.url));
@@ -164,6 +166,57 @@ dependencies:
   });
 });
 
+describe('placeholderProblems', () => {
+  it('finds scaffold placeholders outside code fences only', () => {
+    const body = '# X\n\n## Steps\n\n1. …\n\n## Checks\n\n- …\n\nSee [TODO: link].\n\n```md\n1. …\n```\n\n- Real step … with an ellipsis.\n';
+    const problems = placeholderProblems(body);
+    assert.equal(problems.length, 3, problems.join('\n'));
+    assert.match(problems[0], /line 5: unfinished placeholder/);
+  });
+});
+
+describe('summarize-evals', () => {
+  it('aggregates grading.json and timing.json per configuration and flags weak expectations', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'evals-'));
+    const write = (path, value) => {
+      mkdirSync(dirname(join(dir, path)), { recursive: true });
+      writeFileSync(join(dir, path), JSON.stringify(value));
+    };
+    const grading = (...passed) => ({
+      expectations: passed.map((ok, i) => ({ text: ['has header', 'right totals'][i], passed: ok, evidence: '' })),
+    });
+    try {
+      write('csv-totals/with_skill/grading.json', grading(true, true));
+      write('csv-totals/with_skill/timing.json', { total_tokens: 1000, duration_ms: 4000 });
+      write('csv-totals/without_skill/grading.json', grading(true, false));
+      write('csv-totals/without_skill/timing.json', { total_tokens: 3000, duration_ms: 8000 });
+      write('edge-case/with_skill/run-1/grading.json', grading(true, true));
+      write('edge-case/with_skill/run-2/grading.json', grading(true, false));
+      write('edge-case/without_skill/grading.json', grading(true, false));
+      const summary = summarize(dir);
+      assert.deepEqual(summary.configs, ['with_skill', 'without_skill']);
+      assert.equal(summary.byConfig.with_skill.passRate.n, 3);
+      assert.ok(Math.abs(summary.byConfig.with_skill.passRate.mean - 5 / 6) < 1e-9);
+      assert.equal(summary.byConfig.without_skill.passRate.mean, 0.5);
+      assert.equal(summary.byConfig.with_skill.tokens.mean, 1000);
+      assert.equal(summary.byConfig.without_skill.seconds.mean, 8);
+      assert.ok(Math.abs(summary.delta.passRate - 1 / 3) < 1e-9);
+      const notes = summary.notes.join('\n');
+      assert.match(notes, /csv-totals: "has header" passes in every configuration/);
+      assert.match(notes, /edge-case \(with_skill\): pass rate varies/);
+      const markdown = toMarkdown(summary);
+      assert.match(markdown, /\| with_skill \| 3 \| 83 ± 29% \| 1000 \| 4\.0 \|/);
+      assert.match(markdown, /with_skill vs without_skill: \+33 points/);
+      const cli = spawnSync(process.execPath, [join(scripts, 'summarize-evals.mjs'), dir, '--json'], { encoding: 'utf8' });
+      assert.equal(cli.status, 0, cli.stderr);
+      assert.equal(JSON.parse(cli.stdout).evals.length, 2);
+      assert.equal(spawnSync(process.execPath, [join(scripts, 'summarize-evals.mjs'), tmpdir() + '/missing-x'], { encoding: 'utf8' }).status, 1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 /** A throwaway git repo with this skill's scripts copied in. */
 function repo() {
   const dir = mkdtempSync(join(tmpdir(), 'skills-'));
@@ -176,6 +229,15 @@ const run = (dir, script, args) =>
     cwd: dir,
     encoding: 'utf8',
   });
+/** Replaces the scaffold placeholders, as an author would. */
+const fillBody = (file) =>
+  writeFileSync(
+    file,
+    readFileSync(file, 'utf8')
+      .replace(/\n<!-- Imperative steps[\s\S]*?-->\n/, '')
+      .replace('1. …', '1. Run the demo.')
+      .replace('- …', '- The demo prints OK.'),
+  );
 const scaffold = (dir, extra = []) =>
   run(dir, 'new-skill.mjs', [
     'demo-skill',
@@ -196,7 +258,19 @@ describe('new-skill and check-skills (project layout)', () => {
     try {
       const made = scaffold(dir, ['--resources', 'references']);
       assert.equal(made.status, 0, made.stderr);
+      assert.doesNotMatch(made.stderr, /placeholder/, 'new-skill does not report its own placeholders');
+      const fresh = run(dir, 'check-skills.mjs', []);
+      assert.equal(fresh.status, 1, 'placeholders fail the check');
+      assert.match(fresh.stderr, /unfinished placeholder/);
+      fillBody(join(dir, '.agents/skills/demo-skill/SKILL.md'));
       assert.equal(run(dir, 'check-skills.mjs', []).status, 0);
+
+      // A reference nothing mentions is a warning, not an error.
+      writeFileSync(join(dir, '.agents/skills/demo-skill/references/notes.md'), '# Notes\n');
+      const unrouted = run(dir, 'check-skills.mjs', []);
+      assert.equal(unrouted.status, 0);
+      assert.match(unrouted.stderr, /references\/notes\.md is not mentioned in SKILL\.md/);
+      rmSync(join(dir, '.agents/skills/demo-skill/references/notes.md'));
       assert.match(
         readFileSync(join(dir, '.agents/skills/demo-skill/SKILL.md'), 'utf8'),
         /^---\nname: demo-skill\ndescription: "Demo skill: does things\. Use when testing\."\n---/,
@@ -245,6 +319,62 @@ describe('new-skill and check-skills (project layout)', () => {
   });
 });
 
+describe('eval files', () => {
+  it('validates evals.json and triggers.json beside the skills folder, and finds stray evals', () => {
+    const dir = repo();
+    const evals = join(dir, '.agents/evals/demo-skill');
+    const check = () => run(dir, 'check-skills.mjs', []);
+    try {
+      assert.equal(scaffold(dir).status, 0);
+      fillBody(join(dir, '.agents/skills/demo-skill/SKILL.md'));
+      mkdirSync(join(evals, 'files'), { recursive: true });
+      writeFileSync(join(evals, 'files/in.csv'), 'a,b\n');
+      writeFileSync(
+        join(evals, 'evals.json'),
+        JSON.stringify({
+          skill_name: 'demo-skill',
+          evals: [{ id: 1, prompt: 'Total the csv', files: ['files/in.csv'], expectations: ['Has a total'] }],
+        }),
+      );
+      writeFileSync(
+        join(evals, 'triggers.json'),
+        JSON.stringify([
+          { query: 'run the demo on my csv', should_trigger: true },
+          { query: 'explain what a csv is', should_trigger: false },
+        ]),
+      );
+      let result = check();
+      assert.equal(result.status, 0, result.stderr);
+      assert.doesNotMatch(result.stderr, /warning/);
+
+      writeFileSync(
+        join(evals, 'evals.json'),
+        JSON.stringify({
+          skill_name: 'other',
+          evals: [{ id: 1, prompt: '' }, { id: 1, prompt: 'x', files: ['files/missing.csv'] }],
+        }),
+      );
+      writeFileSync(join(evals, 'triggers.json'), JSON.stringify([{ query: 'only positive', should_trigger: true }]));
+      mkdirSync(join(dir, '.agents/evals/gone-skill'));
+      result = check();
+      assert.equal(result.status, 1);
+      for (const expected of [
+        'skill_name must be "demo-skill"',
+        'evals\\[0\\]\\.prompt is missing',
+        'evals\\[1\\]\\.id must be a unique integer',
+        'files/missing\\.csv does not exist',
+        'include both should_trigger true and false',
+        '\\.agents/evals/gone-skill: no skill named gone-skill',
+      ])
+        assert.match(result.stderr, new RegExp(expected));
+      writeFileSync(join(evals, 'triggers.json'), '{ not json');
+      assert.match(check().stderr, /triggers\.json: not valid JSON/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('catalog layout', () => {
   it('scaffolds into skills/<name>/ with no symlink and checks it', () => {
     const dir = repo();
@@ -252,6 +382,7 @@ describe('catalog layout', () => {
       const made = scaffold(dir, ['--catalog', 'skills']);
       assert.equal(made.status, 0, made.stderr);
       assert.doesNotMatch(made.stdout, /Linked/);
+      fillBody(join(dir, 'skills/demo-skill/SKILL.md'));
       const check = run(dir, 'check-skills.mjs', ['--catalog', 'skills']);
       assert.equal(check.status, 0, check.stderr);
     } finally {
