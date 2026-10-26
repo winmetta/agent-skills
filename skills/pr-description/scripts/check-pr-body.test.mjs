@@ -24,16 +24,28 @@ describe('checkPrBody', () => {
   it('rejects the unfilled template', () => {
     const template = readFileSync(join(skill, 'assets/pr-body-template.md'), 'utf8');
     const { errors, warnings } = checkPrBody(template);
-    assert.equal(errors.filter((e) => e.includes('is empty')).length, 7);
-    assert.equal(warnings.length, 7);
+    assert.equal(errors.filter((e) => e.includes('is empty')).length, 9, errors.join('\n'));
+    assert.match(errors.join('\n'), /<details> block has no changes in it/);
+    assert.equal(warnings.length, 10, warnings.join('\n'));
+  });
+  it('requires only Why?, Changelog and Validation, plus --require', () => {
+    const minimal = example.match(/## Why\?[\s\S]*?(?=## Impact)/)[0] +
+      example.match(/## Changelog[\s\S]*?(?=## What changed)/)[0] +
+      example.match(/## Validation[\s\S]*?(?=## Dev Test)/)[0];
+    assert.deepEqual(checkPrBody(minimal), { errors: [], warnings: [] });
+    const errors = checkPrBody(minimal, { require: ['Dev Test', 'Nope'] }).errors.join('\n');
+    assert.match(errors, /missing section "## Dev Test"/);
+    assert.match(errors, /--require: unknown section "Nope"/);
+    assert.match(checkPrBody(minimal.replace(/## Why\?[\s\S]*?(?=## Changelog)/, '')).errors.join('\n'), /missing section "## Why\?"/);
+    assert.match(checkPrBody(`${minimal}\n## Dev Test\n\n`).errors.join('\n'), /"## Dev Test" .* is empty; fill it or remove the section/);
   });
   it('finds missing, duplicate, misordered and empty sections', () => {
     const body = example
       .replace(/## Dev Test\n\n[\s\S]*?\n(?=## )/, '## Dev Test\n\n<!-- later -->\n\n')
-      .replace(/## References[\s\S]*$/, '')
+      .replace(/## Why\?[\s\S]*?(?=## Impact)/, '')
       .replace('## Impact', '## Validation\n\n- ran it\n\n## Impact');
     const errors = checkPrBody(body).errors.join('\n');
-    assert.match(errors, /missing section "## References"/);
+    assert.match(errors, /missing section "## Why\?"/);
     assert.match(errors, /"## Validation" appears 2 times/);
     assert.match(errors, /out of order/);
     assert.match(errors, /"## Dev Test" .* is empty/);
@@ -57,11 +69,26 @@ describe('checkPrBody', () => {
     const body = example
       .replace('## Why?', '## Why')
       .replace('## Validation', '## Screenshots\n\nnone\n\n```md\n## Changelog\n```\n\n## Validation')
-      .concat('\n## Checklist\n\n- [x] done\n');
+      .concat('\n## Deployment notes\n\nNone.\n');
     const { errors, warnings } = checkPrBody(body);
     assert.deepEqual(errors, []);
     assert.equal(warnings.length, 1);
     assert.match(warnings[0], /"## Screenshots" sits among/);
+  });
+});
+
+describe('What changed and Checklist', () => {
+  it('requires a <details> block with content and a task list', () => {
+    const open = example.replace(/<details>\n<summary>Changes by area<\/summary>\n/, '').replace('\n</details>\n', '\n');
+    assert.match(checkPrBody(open).errors.join('\n'), /must put the detail in <details>/);
+    const cramped = example.replace('</summary>\n\n', '</summary>\n');
+    assert.deepEqual(checkPrBody(cramped).errors, []);
+    assert.match(checkPrBody(cramped).warnings.join('\n'), /leave a blank line/);
+    const noSummary = example.replace('<summary>Changes by area</summary>', '<summary> </summary>');
+    assert.match(checkPrBody(noSummary).errors.join('\n'), /the <summary> is empty/);
+    const prose = example.replace(/## Checklist\n\n[\s\S]*$/, '## Checklist\n\nAll good.\n');
+    assert.match(checkPrBody(prose).errors.join('\n'), /needs task-list items/);
+    assert.deepEqual(checkPrBody(example.replace('## Not included / follow-ups', '## Not included/follow-ups')).errors, []);
   });
 });
 
