@@ -7,7 +7,7 @@ Agent skills for Claude Code, Codex and other AI coding agents, from [Win Metta]
 | Skill | What it does |
 | --- | --- |
 | [`skill-maintainer`](skills/skill-maintainer/SKILL.md) | Creates, updates, improves, tests, renames and checks skills so they work in both Claude Code and Codex from one copy. The real files go in `.agents/skills/<name>/` and `.claude/skills/<name>` is a symlink to them. It also writes a Codex `agents/openai.yaml`, and guides writing, testing against a baseline, grading and description tuning. Includes a scaffolder, a checker and an eval summarizer (Node 20+, no dependencies). |
-| [`pr-description`](skills/pr-description/SKILL.md) | Writes or updates a pull request or merge request title and description, on any hosting platform, with the sections Why?, Impact, Technical Impact, Changelog (Conventional Commits), Validation, Dev Test and References. It reports only checks that were actually run, keeps what people added when updating, and includes a template, an example and a checker for the structure (Node 20+, no dependencies). |
+| [`pr-description`](skills/pr-description/SKILL.md) | Writes or updates a pull request or merge request title and description, on any hosting platform, with the sections Why?, Impact, Technical Impact, Changelog (Conventional Commits), What changed (collapsed), Validation, Dev Test, References, Not included / follow-ups and Checklist; only Why?, Changelog and Validation are required. It reports only checks that were actually run, keeps what people added when updating, and includes a template, an example and a checker for the structure (Node 20+, no dependencies). |
 
 ## Install
 

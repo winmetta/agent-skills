@@ -29,6 +29,26 @@ Customers who clicked "Pay" twice on a slow connection were sometimes charged tw
 - feat(db): add payments.idempotency_key to record the key used for each charge
 - test(checkout): cover double clicks and server retries against the provider's test mode
 
+## What changed
+
+<details>
+<summary>Changes by area</summary>
+
+**`api/checkout/`**
+- `createCharge` builds the key as `<orderId>-<attempt>` and sends it in the provider's idempotency header.
+- A repeat request with the same key returns the stored payment instead of calling the provider.
+
+**`web/checkout/PayButton.tsx`**
+- The button is disabled and shows "Processing…" from click until the API answers.
+
+**`db/migrations/0042_payment_idempotency_key.sql`**
+- Adds nullable `payments.idempotency_key` with a unique index; reversible.
+
+**Tests**
+- `checkout.test.ts`: double click, server retry, and a new attempt after a failed one.
+
+</details>
+
 ## Validation
 
 - [x] `npm run lint` and `npm run typecheck`: pass
@@ -48,4 +68,18 @@ Customers who clicked "Pay" twice on a slow connection were sometimes charged tw
 - Payment provider docs: idempotent requests
 - Earlier attempt with a client-side lock: #1287 (closed)
 - RCA: "Duplicate charges, March" in the team wiki
+
+## Not included / follow-ups
+
+- Refunding past duplicate charges: support is handling those by hand (SUP-482).
+- iOS app check once its release build is ready (#1302).
+- Same idempotency handling for subscription renewals, which use a different code path (#1303).
+
+## Checklist
+
+- [x] Title follows Conventional Commits and covers the whole PR
+- [x] Description matches the final state of the PR
+- [x] Tests added for the new behaviour
+- [x] Migration is reversible
+- [x] No secrets or personal data
 ```
