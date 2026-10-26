@@ -1,0 +1,12 @@
+{
+  "name": "winmetta",
+  "description": "Win Metta's agent skills for Claude Code and Codex",
+  "owner": { "name": "Win Metta", "url": "https://winmetta.org" },
+  "plugins": [
+    {
+      "name": "agent-skills",
+      "source": "./",
+      "description": "Agent skills that work in both Claude Code and Codex, starting with skill-maintainer."
+    }
+  ]
+}
