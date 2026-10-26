@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test \"skills/**/*.test.mjs\"",
+    "test": "node scripts/run-tests.mjs",
     "check": "node skills/skill-maintainer/scripts/check-skills.mjs --catalog skills"
   }
 }

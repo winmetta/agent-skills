@@ -14,10 +14,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      # The scripts promise Node 20+: test on the oldest supported version and on the current
+      # LTS, in one job so the required "checks" status keeps its name.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - name: Test the skill scripts (Node 20)
+        run: npm test
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Test the skill scripts
+      - name: Test the skill scripts (Node 24)
         run: npm test
       - name: Check every skill (catalog layout)
         run: npm run check

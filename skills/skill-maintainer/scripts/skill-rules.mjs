@@ -168,12 +168,13 @@ export function openaiProblems(text, name) {
       problems.push(
         'agents/openai.yaml: dependencies.tools[].type must be "mcp" (the only supported type)',
       );
-  // OpenAI's guidance: quote every string value.
+  // OpenAI's guidance, as its generator writes it: every string value in double quotes (not
+  // single quotes, plain text or block scalars). Booleans and numbers stay bare.
   for (const [index, line] of text.split('\n').entries()) {
     const value = /^\s*-?\s*[A-Za-z_][\w-]*:\s+(.+?)\s*(#.*)?$/.exec(line)?.[1];
-    if (value && !/^["'[{|>]|^(true|false|-?\d+(\.\d+)?)$/.test(value))
+    if (value && !/^"|^(true|false|-?\d+(\.\d+)?)$/.test(value))
       problems.push(
-        `agents/openai.yaml:${index + 1}: quote the string value (${value.slice(0, 30)})`,
+        `agents/openai.yaml:${index + 1}: write the string value in double quotes (${value.slice(0, 30)})`,
       );
   }
   return problems;

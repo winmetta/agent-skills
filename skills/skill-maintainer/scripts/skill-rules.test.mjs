@@ -140,9 +140,27 @@ dependencies:
       'must mention $demo',
       'allow_implicit_invocation must be true or false',
       'type must be "mcp"',
-      'quote the string value (Demo)',
+      'write the string value in double quotes (Demo)',
     ])
       assert.match(problems, new RegExp(expected.replace(/[$()]/g, '\\$&')));
+  });
+  it('requires double quotes for every string in agents/openai.yaml', () => {
+    const single = `interface:
+  display_name: 'Demo'
+  short_description: 'A demo skill for testing things'
+  default_prompt: 'Use $demo to test.'
+`;
+    assert.equal(
+      openaiProblems(single, 'demo').filter((p) => p.includes('double quotes')).length,
+      3,
+    );
+    const block = `interface:
+  display_name: "Demo"
+  short_description: "A demo skill for testing things"
+  default_prompt: >-
+    Use $demo to test.
+`;
+    assert.match(openaiProblems(block, 'demo').join('\n'), /:4: write the string value in double quotes/);
   });
 });
 

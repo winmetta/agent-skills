@@ -20,7 +20,7 @@ The format rules for skills, and how each tool finds and installs them, are in `
 2. Scaffold it: `node skills/skill-maintainer/scripts/new-skill.mjs <name> --catalog skills --description "…" --display-name "…" --short-description "…" --default-prompt 'Use $<name> to …'`.
 3. Write the skill. Keep it general: no organisation-specific paths, names or rules.
 4. Scripts use Node 20+ with no npm dependencies, so they run wherever the skill is installed. Give scripts `node:test` tests next to them (`*.test.mjs`).
-5. Run `npm test` and `npm run check`; CI runs both and checks the plugin manifests.
+5. Run `npm test` and `npm run check`. CI runs the tests on Node 20 (the oldest supported version) and Node 24, runs the check, and checks the plugin manifests. Never use a test-runner glob (`node --test "**/*.test.mjs"`): Node 20 doesn't support it, which is why `scripts/run-tests.mjs` lists the files.
 6. Add the skill to the list in `README.md`.
 7. Open a PR. Its title follows Conventional Commits (`feat(skills): add <name>`, `fix(skills): …`, `docs: …`). PRs are squash-merged, so the title and description become the commit.
 

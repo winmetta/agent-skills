@@ -35,7 +35,7 @@ Skills from a plugin are namespaced, for example `/agent-skills:skill-maintainer
 codex plugin marketplace add winmetta/agent-skills
 ```
 
-Then install `agent-skills` from the plugin list.
+Then install `agent-skills` from the plugin list. This channel follows OpenAI's plugin docs but hasn't been checked with the Codex CLI yet; if it fails, use `npx skills` above, which supports Codex.
 
 ## Use
 
