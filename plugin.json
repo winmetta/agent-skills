@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "agent-skills",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Agent skills from Win Metta that work in both Claude Code and Codex, starting with skill-maintainer for creating and checking shared skills.",
   "author": { "name": "Win Metta", "url": "https://winmetta.org" },
   "homepage": "https://github.com/winmetta/agent-skills",

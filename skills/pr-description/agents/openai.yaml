@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Description"
+  short_description: "Write and update structured pull request descriptions"
+  default_prompt: "Use $pr-description to write or update the pull request or merge request description for this branch."
