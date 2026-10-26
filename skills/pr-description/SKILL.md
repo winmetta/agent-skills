@@ -38,10 +38,10 @@ Rules:
 5. **Draft into a file**, not a shell argument, and check it:
 
    ```bash
-   node <skill-dir>/scripts/check-pr-body.mjs <file> --title "<title>"
+   node <skill-dir>/scripts/check-pr-body.mjs <file> --title "<title>" [--types feat,fix,…]
    ```
 
-   It checks structure, Changelog format and title, not content, so reread the draft.
+   It checks structure, Changelog format and title, not content, so reread the draft. Any lowercase commit type passes; pass `--types` when the repo defines its own list.
 6. **Publish** with the platform's tool, passing the body from the file or standard input. Only create or edit a PR when the user asked; otherwise show the draft. Read it back afterwards and share the link.
 
 ## Updating

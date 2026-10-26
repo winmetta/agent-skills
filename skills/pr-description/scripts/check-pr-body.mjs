@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Checks a pull request body (and optionally its title) against the pr-description structure:
 // the required sections in order, none empty, and Conventional Commits lines in Changelog.
-//   node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "feat(x): …"]
+// Any lowercase type is accepted, as the spec allows; --types restricts them to a repo's list.
+//   node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "feat(x): …"] [--types feat,fix,…]
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,8 +17,16 @@ export const sections = [
   'Dev Test',
   'References',
 ];
-const types = 'feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert';
-const conventional = new RegExp(`^(${types})(\\([a-z0-9][\\w./-]*\\))?!?: \\S`);
+const conventional = /^([a-z][a-z0-9-]*)(\([a-z0-9][\w./-]*\))?!?: \S/;
+
+/** Problems with one `type(scope): description` line; `types` optionally limits the type. */
+function commitProblem(line, types) {
+  const type = conventional.exec(line)?.[1];
+  if (!type) return 'is not Conventional Commits ("type(scope): description")';
+  if (types?.length && !types.includes(type))
+    return `uses type "${type}", which this repo does not allow (${types.join(', ')})`;
+  return null;
+}
 const key = (heading) => heading.trim().replace(/\?$/, '').toLowerCase();
 
 /** Splits markdown into level-2 sections, ignoring headings inside code fences. */
@@ -39,7 +48,7 @@ function split(text) {
 
 const withoutComments = (lines) => lines.join('\n').replace(/<!--[\s\S]*?-->/g, '');
 
-export function checkPrBody(text) {
+export function checkPrBody(text, { types } = {}) {
   const errors = [];
   const warnings = [];
   const found = split(text);
@@ -62,8 +71,8 @@ export function checkPrBody(text) {
       if (!items.length) errors.push('"## Changelog" needs at least one "- type(scope): …" bullet');
       for (const item of items) {
         const entry = item.slice(2).replace(/^`|`$/g, '').trim();
-        if (!conventional.test(entry))
-          errors.push(`Changelog entry is not Conventional Commits (${types.replaceAll('|', ', ')}): "${entry.slice(0, 60)}"`);
+        const problem = commitProblem(entry, types);
+        if (problem) errors.push(`Changelog entry ${problem}: "${entry.slice(0, 60)}"`);
       }
     }
   }
@@ -75,9 +84,10 @@ export function checkPrBody(text) {
   return { errors, warnings };
 }
 
-export function checkTitle(title) {
+export function checkTitle(title, { types } = {}) {
   const problems = [];
-  if (!conventional.test(title)) problems.push(`title is not Conventional Commits: "${title}"`);
+  const problem = commitProblem(title, types);
+  if (problem) problems.push(`title ${problem}: "${title}"`);
   if (title.length > 72) problems.push(`title is ${title.length} characters; keep it under about 70`);
   if (/\.$/.test(title)) problems.push('title should not end with a full stop');
   return problems;
@@ -86,15 +96,16 @@ export function checkTitle(title) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
-    options: { title: { type: 'string' } },
+    options: { title: { type: 'string' }, types: { type: 'string' } },
   });
   if (positionals.length !== 1) {
-    console.error('Usage: node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "…"]');
+    console.error('Usage: node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "…"] [--types feat,fix,…]');
     process.exit(1);
   }
   const text = readFileSync(positionals[0] === '-' ? 0 : positionals[0], 'utf8');
-  const { errors, warnings } = checkPrBody(text);
-  if (values.title !== undefined) errors.push(...checkTitle(values.title));
+  const types = values.types?.split(',').map((t) => t.trim()).filter(Boolean);
+  const { errors, warnings } = checkPrBody(text, { types });
+  if (values.title !== undefined) errors.push(...checkTitle(values.title, { types }));
   for (const warning of warnings) console.warn(`warning: ${warning}`);
   if (errors.length) {
     console.error(errors.join('\n'));

@@ -41,11 +41,13 @@ describe('checkPrBody', () => {
   it('requires Conventional Commits bullets in Changelog', () => {
     const body = example.replace(
       '- test(checkout):',
-      '- Updated tests\n- `docs: note the key`\n- feature(x): nope\n- test(checkout):',
+      '- Updated tests\n- `docs: note the key`\n- security(auth): rotate keys\n- Fix(x): nope\n- test(checkout):',
     );
     const errors = checkPrBody(body).errors;
     assert.equal(errors.length, 2, errors.join('\n'));
-    assert.match(errors.join('\n'), /"Updated tests"[\s\S]*"feature\(x\): nope"/);
+    assert.match(errors.join('\n'), /"Updated tests"[\s\S]*"Fix\(x\): nope"/);
+    const limited = checkPrBody(body, { types: ['feat', 'fix', 'docs', 'test'] }).errors.join('\n');
+    assert.match(limited, /uses type "security", which this repo does not allow/);
     assert.match(
       checkPrBody(example.replace(/## Changelog\n\n[\s\S]*?\n(?=## )/, '## Changelog\n\nSome prose.\n\n')).errors.join('\n'),
       /needs at least one/,
@@ -67,7 +69,9 @@ describe('checkTitle', () => {
   it('checks Conventional Commits form and length', () => {
     assert.deepEqual(checkTitle('feat(api)!: drop v1 endpoints'), []);
     assert.deepEqual(checkTitle('docs: fix typo'), []);
-    for (const bad of ['Add feature', 'feat:missing space', 'fix(x): ends with a stop.', `feat: ${'x'.repeat(80)}`])
+    assert.deepEqual(checkTitle('deps(api): bump client'), [], 'any lowercase type by default');
+    assert.match(checkTitle('deps(api): bump client', { types: ['feat', 'fix'] })[0], /does not allow/);
+    for (const bad of ['Add feature', 'Feat: capital type', 'feat:missing space', 'fix(x): ends with a stop.', `feat: ${'x'.repeat(80)}`])
       assert.notDeepEqual(checkTitle(bad), [], bad);
   });
 });
@@ -79,6 +83,9 @@ describe('check-pr-body.mjs', () => {
     const bad = cli(['-', '--title', 'Stop double charges'], example);
     assert.equal(bad.status, 1);
     assert.match(bad.stderr, /title is not Conventional Commits/);
+    const typed = cli(['-', '--title', 'deps: bump', '--types', 'feat, fix'], example);
+    assert.equal(typed.status, 1);
+    assert.match(typed.stderr, /title uses type "deps"/);
     assert.equal(cli([], '').status, 1);
   });
 });
