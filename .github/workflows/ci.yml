@@ -19,6 +19,24 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 20
+      # Each skill is tested the way it is written (see AGENTS.md), so install only the tools
+      # the skills need. The runner lists them; the shell tools are pinned to the latest stable
+      # versions as of 2026-10-30 (look up newer ones with `mise latest <tool>`). Python 3 is
+      # already on the runner.
+      - name: List the tools the skills need
+        id: needs
+        run: |
+          tools="$(node scripts/run-tests.mjs --needs | tr '\n' ' ')"
+          echo "Tools needed: ${tools:-none}"
+          case " ${tools} " in *" shfmt "*) echo "shell=true" >>"$GITHUB_OUTPUT" ;; esac
+      - name: Install ShellCheck and shfmt
+        if: steps.needs.outputs.shell == 'true'
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          mise_toml: |
+            [tools]
+            shellcheck = "0.11.0"
+            shfmt = "3.14.1"
       - name: Test the skill scripts (Node 20)
         run: npm test
       - uses: actions/setup-node@v7

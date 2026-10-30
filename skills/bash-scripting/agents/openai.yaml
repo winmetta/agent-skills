@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bash Scripting"
+  short_description: "Write modular Bash scripts, then lint and format them"
+  default_prompt: "Use $bash-scripting to write this script as small functions and validate it."
