@@ -10,7 +10,8 @@
 // Node 20's test runner takes file paths but no globs, so the files are listed explicitly.
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const INSTALL_HINT = {
   shellcheck: 'mise use -g shellcheck   (or: brew install shellcheck)',
@@ -74,4 +75,5 @@ export const main = (argv) => {
   return results.every(Boolean) ? 0 : 1;
 };
 
-if (import.meta.url === `file://${process.argv[1]}`) process.exit(main(process.argv.slice(2)));
+// Compare file paths, not URLs: import.meta.url percent-encodes spaces, process.argv[1] does not.
+if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) process.exit(main(process.argv.slice(2)));
