@@ -1,0 +1,16 @@
+# Shell script style for this repo. shfmt reads it, locally and in CI, so both agree.
+# Same as the shared Win Metta settings in the .github repo (4 spaces, like the shared vimrc in
+# bootstrap-dev-env); kept here because CI checks out only this repo, not the workspace root.
+root = true
+
+[*.sh]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+# shfmt reads these:
+shell_variant = bash
+switch_case_indent = false
