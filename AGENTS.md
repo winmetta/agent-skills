@@ -26,17 +26,18 @@ The format rules for skills, and how each tool finds and installs them, are in `
    - Bash scripts use `#!/usr/bin/env bash`, stay compatible with the bash 3.2 that ships with macOS, use no GNU-only flags, and pass `bash -n`, `shellcheck` and `shfmt`; Python scripts run on the oldest Python 3 the skill states.
    - `scripts/run-tests.mjs` finds each kind of test and lints every `*.sh` file under `skills/`, so `npm test` covers all of them. CI installs only the tools the skills need (`node scripts/run-tests.mjs --needs` lists them), currently ShellCheck and shfmt when a skill has shell scripts. If a new language needs another tool, add it to the runner and the CI install step.
 5. Run `npm test` and `npm run check`. CI runs the tests on Node 20 (the oldest supported version) and Node 24, runs the check, and checks the plugin manifests. Never use a test-runner glob (`node --test "**/*.test.mjs"`): Node 20 doesn't support it, which is why `scripts/run-tests.mjs` lists the files.
-6. Add the skill to the list in `README.md`.
-7. Open a PR. Its title follows Conventional Commits (`feat(skills): add <name>`, `fix(skills): …`, `docs: …`). PRs are squash-merged, so the title and description become the commit.
+6. Bump the plugin version in **both** `plugin.json` files in the same PR, following the rules under Releases. Docs-only or CI-only changes need no bump.
+7. Add the skill to the list in `README.md`.
+8. Open a PR. Its title follows Conventional Commits and ends with the head branch in parentheses (`feat(skills): add <name> (feat/add-<name>)`, `fix(skills): … (fix/…)`, `docs: … (docs/…)`); GitHub then appends the PR number. PRs are squash-merged, so the title and description become the commit.
 
 ## Releases
 
-- The plugin version is in **both** `.claude-plugin/plugin.json` and `plugin.json`, and they must match (CI checks this).
+- The plugin version is in **both** `.claude-plugin/plugin.json` and `plugin.json`, and they must match (CI checks this). Every PR that changes an installed skill bumps it (step 6 above); tagging only publishes the version already on `main`.
   - Bump the minor version for a new skill or a behaviour change.
   - Bump the patch version for a fix.
   - Bump the major version for a breaking change: a renamed or removed skill, or changed script flags.
 - Before tagging, run `claude plugin validate .`. If a Codex CLI is available, also run `codex plugin marketplace add ./` with a throwaway `CODEX_HOME`.
-- Tag `vX.Y.Z` on `main` and publish a GitHub release with notes.
+- Tag `vX.Y.Z` on `main`, matching the version in the manifests, and publish a GitHub release with notes.
 - `npx skills` installs from the default branch, or a ref the user gives, so `main` must always be releasable.
 
 ## Rules
