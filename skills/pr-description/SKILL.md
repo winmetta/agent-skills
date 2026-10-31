@@ -43,7 +43,7 @@ Rules:
 - **Extra sections** (screenshots, deployment notes) go after Checklist.
 - **Public repos:** no secrets, personal data, internal hostnames or private links.
 
-**Title:** Conventional Commits, imperative, under about 70 characters, covering the whole PR: `feat(auth): add passkey sign-in`.
+**Title:** Conventional Commits, imperative, covering the whole PR, ending with the PR's head (source) branch in square brackets: `feat(auth): add passkey sign-in [feat/passkey-sign-in]`. Keep the part before the branch under about 70 characters. The branch goes last because the platform appends the PR number on a squash merge, giving `… [feat/passkey-sign-in] (#123)`; don't add the number yourself. Read the branch from the PR (`headRefName` on GitHub) or `git branch --show-current`, and refresh the title if the branch is renamed.
 
 ## Steps
 
@@ -54,7 +54,7 @@ Rules:
 5. **Draft into a file**, not a shell argument, and check it:
 
    ```bash
-   node <skill-dir>/scripts/check-pr-body.mjs <file> --title "<title>" [--types feat,fix,…]
+   node <skill-dir>/scripts/check-pr-body.mjs <file> --title "<title>" --branch "<head-branch>" [--types feat,fix,…]
    ```
 
    It checks structure, Changelog format and title, not content, so reread the draft. Pass `--require "Dev Test,Checklist"` (any section names) when the repo makes more sections mandatory. Any lowercase commit type passes; pass `--types` when the repo defines its own list.
@@ -62,7 +62,7 @@ Rules:
 
 ## Updating
 
-- Describe the PR as it is now: rebuild the Changelog from the full diff, drop reverted changes, refresh Validation and Dev Test, and update the title if the scope changed.
+- Describe the PR as it is now: rebuild the Changelog from the full diff, drop reverted changes, refresh Validation and Dev Test, and update the title if the scope or the head branch changed.
 - Keep what others added (links, reviewer notes, screenshots, ticked items), moved into the right section.
 - Convert an older structure (Summary, What changed, Testing…) without losing information: a summary splits into Why? and Impact, testing into Validation and Dev Test, and an open What changed list moves into the collapsed block.
 - Update it whenever the scope changes and before merging.

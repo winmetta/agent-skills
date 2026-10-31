@@ -4,7 +4,7 @@
 // any named with --require), none empty, Conventional Commits lines in Changelog, What changed
 // inside a <details> block, and task-list items in Checklist.
 // Any lowercase type is accepted, as the spec allows; --types restricts them to a repo's list.
-//   node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "feat(x): …"] [--types feat,fix,…]
+//   node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "feat(x): …"] [--types feat,fix,…] [--branch <head-branch>]
 //     [--require "Dev Test,Checklist"]
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -112,8 +112,11 @@ export function checkPrBody(text, { types, require = [] } = {}) {
   return { errors, warnings };
 }
 
-export function checkTitle(title, { types } = {}) {
+export function checkTitle(full, { types, branch } = {}) {
   const problems = [];
+  const suffix = branch ? ` [${branch}]` : '';
+  const title = suffix && full.endsWith(suffix) ? full.slice(0, -suffix.length) : full;
+  if (suffix && title === full) problems.push(`title should end with the head branch: "${suffix.trim()}"`);
   const problem = commitProblem(title, types);
   if (problem) problems.push(`title ${problem}: "${title}"`);
   if (title.length > 72) problems.push(`title is ${title.length} characters; keep it under about 70`);
@@ -127,18 +130,19 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     options: {
       title: { type: 'string' },
       types: { type: 'string' },
+      branch: { type: 'string' },
       require: { type: 'string' },
     },
   });
   if (positionals.length !== 1) {
-    console.error('Usage: node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "…"] [--types feat,fix,…] [--require "Dev Test,…"]');
+    console.error('Usage: node <skill-dir>/scripts/check-pr-body.mjs <body.md | -> [--title "…"] [--types feat,fix,…] [--branch <head-branch>] [--require "Dev Test,…"]');
     process.exit(1);
   }
   const text = readFileSync(positionals[0] === '-' ? 0 : positionals[0], 'utf8');
   const list = (value) => value?.split(',').map((t) => t.trim()).filter(Boolean);
   const types = list(values.types);
   const { errors, warnings } = checkPrBody(text, { types, require: list(values.require) });
-  if (values.title !== undefined) errors.push(...checkTitle(values.title, { types }));
+  if (values.title !== undefined) errors.push(...checkTitle(values.title, { types, branch: values.branch }));
   for (const warning of warnings) console.warn(`warning: ${warning}`);
   if (errors.length) {
     console.error(errors.join('\n'));

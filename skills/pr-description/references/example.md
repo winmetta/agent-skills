@@ -2,7 +2,7 @@
 
 A complete example, for a fictional change to a web app. Match the tone and depth, not the content.
 
-Title: `fix(checkout): stop double charges when the pay button is clicked twice`
+Title: `fix(checkout): stop double charges when the pay button is clicked twice [fix/double-charge]`
 
 ```markdown
 ## Why?
@@ -77,7 +77,7 @@ Customers who clicked "Pay" twice on a slow connection were sometimes charged tw
 
 ## Checklist
 
-- [x] Title follows Conventional Commits and covers the whole PR
+- [x] Title follows Conventional Commits, covers the whole PR and ends with the head branch
 - [x] Description matches the final state of the PR
 - [x] Tests added for the new behaviour
 - [x] Migration is reversible

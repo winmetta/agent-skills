@@ -103,6 +103,15 @@ describe('checkTitle', () => {
   });
 });
 
+describe('checkTitle with a head branch', () => {
+  it('requires the branch at the end and leaves it out of the length check', () => {
+    const branch = 'feat/passkey-sign-in';
+    assert.deepEqual(checkTitle(`feat(auth): add passkey sign-in [${branch}]`, { branch }), []);
+    assert.match(checkTitle('feat(auth): add passkey sign-in', { branch })[0], /end with the head branch/);
+    assert.deepEqual(checkTitle(`feat: ${'x'.repeat(60)} [${branch}]`, { branch }), []);
+  });
+});
+
 describe('check-pr-body.mjs', () => {
   it('reads stdin and exits 0 or 1', () => {
     const ok = cli(['-', '--title', 'fix(checkout): stop double charges'], example);
