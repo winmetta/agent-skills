@@ -28,7 +28,7 @@ The format rules for skills, and how each tool finds and installs them, are in `
 5. Run `npm test` and `npm run check`. CI runs the tests on Node 20 (the oldest supported version) and Node 24, runs the check, and checks the plugin manifests. Never use a test-runner glob (`node --test "**/*.test.mjs"`): Node 20 doesn't support it, which is why `scripts/run-tests.mjs` lists the files.
 6. Bump the plugin version in **both** `plugin.json` files in the same PR, following the rules under Releases. Docs-only or CI-only changes need no bump.
 7. Add the skill to the list in `README.md`.
-8. Open a PR. Its title follows Conventional Commits and ends with the head branch in parentheses (`feat(skills): add <name> (feat/add-<name>)`, `fix(skills): … (fix/…)`, `docs: … (docs/…)`); GitHub then appends the PR number. PRs are squash-merged, so the title and description become the commit.
+8. Open a PR. Its title follows Conventional Commits and ends with the head branch in square brackets (`feat(skills): add <name> [feat/add-<name>]`, `fix(skills): … [fix/…]`, `docs: … [docs/…]`); GitHub then appends the PR number. PRs are squash-merged, so the title and description become the commit.
 
 ## Releases
 

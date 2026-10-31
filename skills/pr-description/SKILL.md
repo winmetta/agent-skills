@@ -43,7 +43,7 @@ Rules:
 - **Extra sections** (screenshots, deployment notes) go after Checklist.
 - **Public repos:** no secrets, personal data, internal hostnames or private links.
 
-**Title:** Conventional Commits, imperative, covering the whole PR, ending with the PR's head (source) branch in parentheses: `feat(auth): add passkey sign-in (feat/passkey-sign-in)`. Keep the part before the branch under about 70 characters. The branch goes last because the platform appends the PR number on a squash merge, giving `… (feat/passkey-sign-in) (#123)`; don't add the number yourself. Read the branch from the PR (`headRefName` on GitHub) or `git branch --show-current`, and refresh the title if the branch is renamed.
+**Title:** Conventional Commits, imperative, covering the whole PR, ending with the PR's head (source) branch in square brackets: `feat(auth): add passkey sign-in [feat/passkey-sign-in]`. Keep the part before the branch under about 70 characters. The branch goes last because the platform appends the PR number on a squash merge, giving `… [feat/passkey-sign-in] (#123)`; don't add the number yourself. Read the branch from the PR (`headRefName` on GitHub) or `git branch --show-current`, and refresh the title if the branch is renamed.
 
 ## Steps
 

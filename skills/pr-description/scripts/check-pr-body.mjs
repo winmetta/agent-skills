@@ -114,7 +114,7 @@ export function checkPrBody(text, { types, require = [] } = {}) {
 
 export function checkTitle(full, { types, branch } = {}) {
   const problems = [];
-  const suffix = branch ? ` (${branch})` : '';
+  const suffix = branch ? ` [${branch}]` : '';
   const title = suffix && full.endsWith(suffix) ? full.slice(0, -suffix.length) : full;
   if (suffix && title === full) problems.push(`title should end with the head branch: "${suffix.trim()}"`);
   const problem = commitProblem(title, types);

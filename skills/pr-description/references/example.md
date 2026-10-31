@@ -2,7 +2,7 @@
 
 A complete example, for a fictional change to a web app. Match the tone and depth, not the content.
 
-Title: `fix(checkout): stop double charges when the pay button is clicked twice (fix/double-charge)`
+Title: `fix(checkout): stop double charges when the pay button is clicked twice [fix/double-charge]`
 
 ```markdown
 ## Why?
