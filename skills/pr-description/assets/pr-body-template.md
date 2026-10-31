@@ -46,5 +46,5 @@
 ## Checklist
 
 <!-- The repo's PR template checklist, or the default; tick only what is true.
-- [ ] Title follows Conventional Commits and covers the whole PR
+- [ ] Title follows Conventional Commits, covers the whole PR and ends with the head branch
 -->
