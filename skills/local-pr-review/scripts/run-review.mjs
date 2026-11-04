@@ -79,7 +79,8 @@ export const parseClaudeOutput = (stdout) => {
 
 // Claude Code arguments for a read-only review. The PR checkout is untrusted, so project settings (hooks),
 // MCP servers and slash commands from it are not loaded, and Bash is limited to exact git commands:
-// git diff, log and show accept --output=<file>, which would write a file.
+// git diff, log and show accept --output=<file>, which would write a file, and git blame --contents <file>
+// prints any file, including the credentials the Read deny rules protect. Glob covers git ls-files.
 // Files the reviewer must never read: a prompt-injected model could copy a credential into a finding.
 export const secretPaths = (keyPath = loadConfig().keyPath) => [
   '~/.config/local-pr-review/**',
@@ -108,11 +109,9 @@ export const claudeArgs = ({ baseRef, contextDirs, model, keyPath }) => [
     `Bash(git diff ${baseRef}...HEAD)`,
     `Bash(git diff --stat ${baseRef}...HEAD)`,
     `Bash(git log --oneline ${baseRef}..HEAD)`,
-    'Bash(git blame:*)',
-    'Bash(git ls-files:*)',
   ].join(','),
   '--disallowedTools',
-  ['Edit', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch', 'Bash(git * --output*)', ...secretPaths(keyPath).map((p) => `Read(${p})`)].join(','),
+  ['Edit', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch', 'Bash(git * --output*)', 'Bash(git * --contents*)', ...secretPaths(keyPath).map((p) => `Read(${p})`)].join(','),
   '--no-session-persistence',
   ...contextDirs.flatMap((d) => ['--add-dir', d]),
   ...(model ? ['--model', model] : []),

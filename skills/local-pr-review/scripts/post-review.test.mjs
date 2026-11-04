@@ -86,6 +86,12 @@ test('validateFindings reports bad entries', () => {
   assert.deepEqual(validateFindings({ summary: '', findings: [finding()] }), []);
   const errors = validateFindings({ findings: [{ severity: 'urgent', line: 0 }] });
   assert.equal(errors.length, 4);
+  const range = validateFindings({ findings: [finding({ start_line: '3' }), finding({ start_line: 0 }), finding({ side: 'BOTH' })] });
+  assert.deepEqual(range, [
+    'findings[0].start_line must be a positive integer or null.',
+    'findings[1].start_line must be a positive integer or null.',
+    'findings[2].side must be LEFT or RIGHT.',
+  ]);
   assert.deepEqual(validateFindings(null), ['The findings file must contain a JSON object.']);
 });
 

@@ -92,6 +92,10 @@ export const validateFindings = (doc) => {
     if (!f.body || typeof f.body !== 'string') errors.push(`${at}.body is required.`);
     if (!SEVERITIES.includes(f.severity)) errors.push(`${at}.severity must be one of ${SEVERITIES.join(', ')}.`);
     if (f.line != null && (!Number.isInteger(f.line) || f.line < 1)) errors.push(`${at}.line must be a positive integer or null.`);
+    if (f.start_line != null && (!Number.isInteger(f.start_line) || f.start_line < 1)) {
+      errors.push(`${at}.start_line must be a positive integer or null.`);
+    }
+    if (f.side != null && f.side !== 'LEFT' && f.side !== 'RIGHT') errors.push(`${at}.side must be LEFT or RIGHT.`);
   }
   return errors;
 };

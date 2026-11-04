@@ -65,6 +65,8 @@ test('claudeArgs never allows wildcard git diff and skips project settings', () 
   assert.equal(args[args.indexOf('--setting-sources') + 1], 'user');
   assert.ok(args.includes('--strict-mcp-config'));
   assert.ok(args[args.indexOf('--disallowedTools') + 1].includes('--output'));
+  assert.ok(!/git (blame|ls-files)/.test(allowed));
+  assert.ok(args[args.indexOf('--disallowedTools') + 1].includes('Bash(git * --contents*)'));
 });
 
 test('buildPrompt fences the description with an unguessable tag', () => {
