@@ -42,13 +42,24 @@ export const findRemote = (remoteLines, repo) => {
   return 'origin';
 };
 
-export const buildPrompt = ({ pr, repo, number, baseRef, contextDirs, rubric }) => {
+const MAX_LISTED_FILES = 300;
+
+export const buildPrompt = ({ pr, repo, number, baseRef, contextDirs, rubric, changedFiles = [] }) => {
   // A fence the author cannot guess, so the description cannot close it and smuggle in instructions.
   const fence = `pr-description-${randomBytes(8).toString('hex')}`;
   return [
     `You are reviewing pull request ${repo}#${number}: "${pr.title}" (${pr.url}).`,
     `The current directory is a checkout of the PR head (${pr.headRefOid}). The base branch "${pr.baseRefName}" is at the git ref ${baseRef}.`,
-    `See the change with: git diff ${baseRef}...HEAD  (also: git diff --stat ${baseRef}...HEAD and git log --oneline ${baseRef}..HEAD). Read other files with the Read, Grep and Glob tools.`,
+    `See the change with: git diff ${baseRef}...HEAD , one file at a time with: git diff ${baseRef}...HEAD -- <path> , and the commits with: git log --oneline ${baseRef}..HEAD (also git diff --stat ${baseRef}...HEAD).`,
+    'Bash is limited to exactly those git commands; any other command is refused. That is expected: do not stop, use the Read, Grep and Glob tools for everything else, including the full content of each changed file.',
+    changedFiles.length
+      ? [
+          `Files changed by this PR (${changedFiles.length}). Review every one of them, not only the first few:`,
+          ...changedFiles.slice(0, MAX_LISTED_FILES).map((f) => `- ${f}`),
+          ...(changedFiles.length > MAX_LISTED_FILES ? [`- … and ${changedFiles.length - MAX_LISTED_FILES} more (see git diff --stat)`] : []),
+        ].join('\n')
+      : null,
+    'In the summary, say which files you reviewed and which you could not.',
     contextDirs.length
       ? `You may also read these related local repositories for context, read-only: ${contextDirs.join(', ')}. Report a finding in one of them with its "repo" set to its owner/name.`
       : null,
@@ -107,6 +118,8 @@ export const claudeArgs = ({ baseRef, contextDirs, model, keyPath }) => [
     'Grep',
     'Glob',
     `Bash(git diff ${baseRef}...HEAD)`,
+    // Everything after -- is a path, never an option, so this cannot pass --output or --contents.
+    `Bash(git diff ${baseRef}...HEAD -- :*)`,
     `Bash(git diff --stat ${baseRef}...HEAD)`,
     `Bash(git log --oneline ${baseRef}..HEAD)`,
   ].join(','),
@@ -181,7 +194,8 @@ export const main = async (argv) => {
   try {
     const sha = git(worktree, 'rev-parse', 'HEAD');
     if (sha !== pr.headRefOid) console.error(`Warning: fetched head ${sha} differs from the PR head ${pr.headRefOid}.`);
-    const prompt = buildPrompt({ pr, repo, number, baseRef, contextDirs, rubric: readFileSync(RUBRIC_PATH, 'utf8') });
+    const changedFiles = git(worktree, 'diff', '--name-only', `${baseRef}...HEAD`).split('\n').filter(Boolean);
+    const prompt = buildPrompt({ pr, repo, number, baseRef, contextDirs, changedFiles, rubric: readFileSync(RUBRIC_PATH, 'utf8') });
     console.error(`Reviewing with ${values.engine}; this can take several minutes…`);
     const findings = reviewWith({ engine: values.engine, cwd: worktree, prompt, baseRef, contextDirs, model: values.model, outFile });
     const errors = validateFindings(findings);
