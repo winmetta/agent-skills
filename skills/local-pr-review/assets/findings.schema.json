@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PR review findings",
+  "description": "Every property is required and unknown properties are rejected, as Codex --output-schema (OpenAI strict structured output) requires; use null where a value does not apply.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "findings"],
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "Two to five sentences: what the PR does and the overall verdict. No list of findings."
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "title", "body", "path", "line", "start_line", "side", "suggestion", "repo"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "high: bug, security hole, data loss or broken contract; medium: likely problem or missing test; low: worth fixing but minor."
+          },
+          "title": { "type": "string", "description": "One line, under 80 characters, stating the problem." },
+          "body": {
+            "type": "string",
+            "description": "Markdown: what is wrong, the concrete scenario where it fails, and how to fix it."
+          },
+          "path": {
+            "type": ["string", "null"],
+            "description": "File path relative to the root of the repository it is in; null for a PR-wide finding."
+          },
+          "line": {
+            "type": ["integer", "null"],
+            "description": "Line number in the PR's head version of the file (or the base version when side is LEFT)."
+          },
+          "start_line": {
+            "type": ["integer", "null"],
+            "description": "First line of a multi-line range ending at line; null for a single line."
+          },
+          "side": {
+            "type": "string",
+            "enum": ["RIGHT", "LEFT"],
+            "description": "RIGHT for added or unchanged lines in the head version, LEFT for deleted lines."
+          },
+          "suggestion": {
+            "type": ["string", "null"],
+            "description": "Exact replacement text for lines start_line..line (or line), applied as a GitHub suggestion; null if none."
+          },
+          "repo": {
+            "type": ["string", "null"],
+            "description": "owner/name when the finding is in a different repository from the PR's; otherwise null."
+          }
+        }
+      }
+    }
+  }
+}
