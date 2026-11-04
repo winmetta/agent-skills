@@ -75,7 +75,7 @@ test('reviewBody records the head commit and counts', () => {
   const body = reviewBody({ plan, summary: 'Looks fine.', headSha: 'abcdef1234567890', reviewer: 'codex' });
   assert.match(body, /Automated review \(codex\)/);
   assert.match(body, /New findings: 1 high, 1 low\./);
-  assert.match(body, /<!-- pr-review:head=abcdef1234567890 -->/);
+  assert.match(body, /<!-- local-pr-review:head=abcdef1234567890 -->/);
   assert.match(body, /src\/a\.js:99/);
   const empty = reviewBody({ plan: { inline: [], summary: [], skipped: [] }, summary: '', headSha: 'abc' });
   assert.match(empty, /No new findings\./);

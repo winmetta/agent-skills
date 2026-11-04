@@ -17,9 +17,9 @@ test('makeAppJwt signs an RS256 token GitHub accepts', () => {
 });
 
 test('loadConfig reads the environment with a default key path', () => {
-  const c = loadConfig({ PR_REVIEW_APP_ID: '7' });
+  const c = loadConfig({ LOCAL_PR_REVIEW_APP_ID: '7' });
   assert.equal(c.appId, '7');
-  assert.match(c.keyPath, /\.config\/pr-review\/app\.pem$/);
+  assert.match(c.keyPath, /\.config\/local-pr-review\/app\.pem$/);
 });
 
 test('parsePr accepts short forms and URLs', () => {
@@ -58,10 +58,10 @@ test('the findings schema is strict enough for Codex structured output', () => {
 });
 
 test('claudeArgs never allows wildcard git diff and skips project settings', () => {
-  const args = claudeArgs({ baseRef: 'refs/pr-review/base-1', contextDirs: ['/x'], model: null });
+  const args = claudeArgs({ baseRef: 'refs/local-pr-review/base-1', contextDirs: ['/x'], model: null });
   const allowed = args[args.indexOf('--allowedTools') + 1];
   assert.ok(!/git (diff|log|show):\*/.test(allowed));
-  assert.ok(allowed.includes('Bash(git diff refs/pr-review/base-1...HEAD)'));
+  assert.ok(allowed.includes('Bash(git diff refs/local-pr-review/base-1...HEAD)'));
   assert.equal(args[args.indexOf('--setting-sources') + 1], 'user');
   assert.ok(args.includes('--strict-mcp-config'));
   assert.ok(args[args.indexOf('--disallowedTools') + 1].includes('--output'));
@@ -77,6 +77,6 @@ test('buildPrompt fences the description with an unguessable tag', () => {
 test('claudeArgs denies reading credentials, including a custom App key path', () => {
   const args = claudeArgs({ baseRef: 'b', contextDirs: [], model: null, keyPath: '/keys/app.pem' });
   const denied = args[args.indexOf('--disallowedTools') + 1].split(',');
-  for (const p of ['~/.config/pr-review/**', '~/.ssh/**', '~/.config/gh/**', '//keys/app.pem']) assert.ok(denied.includes(`Read(${p})`), p);
+  for (const p of ['~/.config/local-pr-review/**', '~/.ssh/**', '~/.config/gh/**', '//keys/app.pem']) assert.ok(denied.includes(`Read(${p})`), p);
   assert.ok(secretPaths('relative.pem').every((p) => !p.endsWith('relative.pem')));
 });

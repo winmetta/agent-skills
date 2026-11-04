@@ -1,8 +1,8 @@
-// GitHub REST helpers for the pr-review scripts: GitHub App authentication and paginated requests.
+// GitHub REST helpers for the local-pr-review scripts: GitHub App authentication and paginated requests.
 // Node 20+, no dependencies. Configuration comes from the environment, never from the repository:
-//   PR_REVIEW_APP_ID           the GitHub App's numeric App ID (required to post)
-//   PR_REVIEW_APP_KEY          path to the App's private key (.pem); default ~/.config/pr-review/app.pem
-//   PR_REVIEW_INSTALLATION_ID  optional; found from the repository when unset
+//   LOCAL_PR_REVIEW_APP_ID           the GitHub App's numeric App ID (required to post)
+//   LOCAL_PR_REVIEW_APP_KEY          path to the App's private key (.pem); default ~/.config/local-pr-review/app.pem
+//   LOCAL_PR_REVIEW_INSTALLATION_ID  optional; found from the repository when unset
 //   GITHUB_API_URL             optional; default https://api.github.com (GitHub Enterprise Server: https://<host>/api/v3)
 import { sign } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -13,9 +13,9 @@ import { join } from 'node:path';
 export const apiUrl = (env = process.env) => (env.GITHUB_API_URL || 'https://api.github.com').replace(/\/+$/, '');
 
 export const loadConfig = (env = process.env) => ({
-  appId: env.PR_REVIEW_APP_ID || '',
-  keyPath: env.PR_REVIEW_APP_KEY || join(homedir(), '.config', 'pr-review', 'app.pem'),
-  installationId: env.PR_REVIEW_INSTALLATION_ID || '',
+  appId: env.LOCAL_PR_REVIEW_APP_ID || '',
+  keyPath: env.LOCAL_PR_REVIEW_APP_KEY || join(homedir(), '.config', 'local-pr-review', 'app.pem'),
+  installationId: env.LOCAL_PR_REVIEW_INSTALLATION_ID || '',
 });
 
 export const hasAppConfig = (config) => Boolean(config.appId) && existsSync(config.keyPath);
@@ -36,7 +36,7 @@ export const request = async (method, path, { token, body, base = apiUrl() } = {
     headers: {
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'pr-review-skill',
+      'User-Agent': 'local-pr-review-skill',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(body ? { 'Content-Type': 'application/json' } : {}),
     },
@@ -68,8 +68,8 @@ export const paginate = async (path, opts, maxPages = 30) => {
 // Returns { token, login } for the App's installation on owner/repo, scoped to that one repository.
 // login is the bot's user login (<app-slug>[bot]), used to find the bot's earlier comments.
 export const appInstallationAuth = async (repo, config = loadConfig()) => {
-  if (!config.appId) throw new Error('PR_REVIEW_APP_ID is not set. See references/github-app-setup.md.');
-  if (!existsSync(config.keyPath)) throw new Error(`GitHub App private key not found at ${config.keyPath} (set PR_REVIEW_APP_KEY).`);
+  if (!config.appId) throw new Error('LOCAL_PR_REVIEW_APP_ID is not set. See references/github-app-setup.md.');
+  if (!existsSync(config.keyPath)) throw new Error(`GitHub App private key not found at ${config.keyPath} (set LOCAL_PR_REVIEW_APP_KEY).`);
   const jwt = makeAppJwt({ appId: config.appId, privateKey: readFileSync(config.keyPath, 'utf8') });
   const app = await request('GET', '/app', { token: jwt });
   const installationId = config.installationId || (await request('GET', `/repos/${repo}/installation`, { token: jwt })).id;

@@ -16,7 +16,7 @@ import { parseArgs } from 'node:util';
 import { appInstallationAuth, ghCliToken, hasAppConfig, loadConfig, paginate, parsePr, request } from './github.mjs';
 
 export const SEVERITIES = ['high', 'medium', 'low'];
-const MARK = 'pr-review';
+const MARK = 'local-pr-review';
 
 // Lines a review comment can attach to, per side, with the hunk each belongs to
 // (a multi-line comment must start and end in the same hunk).
@@ -216,7 +216,7 @@ export const main = async (argv) => {
   if (hasAppConfig(config)) auth = await appInstallationAuth(repo, config);
   else if (dryRun) auth = { token: ghCliToken(), login: '' };
   else {
-    console.error('No GitHub App configured (PR_REVIEW_APP_ID, PR_REVIEW_APP_KEY). See references/github-app-setup.md.');
+    console.error('No GitHub App configured (LOCAL_PR_REVIEW_APP_ID, LOCAL_PR_REVIEW_APP_KEY). See references/github-app-setup.md.');
     return 1;
   }
   const opts = { token: auth.token };

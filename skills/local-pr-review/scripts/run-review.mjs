@@ -82,7 +82,7 @@ export const parseClaudeOutput = (stdout) => {
 // git diff, log and show accept --output=<file>, which would write a file.
 // Files the reviewer must never read: a prompt-injected model could copy a credential into a finding.
 export const secretPaths = (keyPath = loadConfig().keyPath) => [
-  '~/.config/pr-review/**',
+  '~/.config/local-pr-review/**',
   '~/.config/gh/**',
   '~/.ssh/**',
   '~/.aws/**',
@@ -161,14 +161,14 @@ export const main = async (argv) => {
   const top = git(resolve(values['repo-dir']), 'rev-parse', '--show-toplevel');
   const contextDirs = values.context.map((d) => resolve(d));
   for (const d of contextDirs) if (!existsSync(d)) throw new Error(`Context directory not found: ${d}`);
-  const outFile = resolve(values.out ?? join(tmpdir(), `pr-review-${repo.replace('/', '-')}-${number}.json`));
+  const outFile = resolve(values.out ?? join(tmpdir(), `local-pr-review-${repo.replace('/', '-')}-${number}.json`));
 
   const pr = JSON.parse(
     run('gh', ['pr', 'view', String(number), '--repo', repo, '--json', 'title,body,url,baseRefName,headRefOid']).stdout,
   );
   const remote = findRemote(git(top, 'remote', '-v'), repo);
-  const headRef = `refs/pr-review/pr-${number}`;
-  const baseRef = `refs/pr-review/base-${number}`;
+  const headRef = `refs/local-pr-review/pr-${number}`;
+  const baseRef = `refs/local-pr-review/base-${number}`;
   git(top, 'fetch', '--quiet', remote, `+refs/pull/${number}/head:${headRef}`, `+refs/heads/${pr.baseRefName}:${baseRef}`);
 
   const worktree = join(dirname(top), `${basename(top)}-pr-${number}`);
