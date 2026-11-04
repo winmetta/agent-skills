@@ -77,7 +77,7 @@ export const findSecrets = (doc) => {
   };
   check('summary', doc?.summary);
   for (const [i, f] of (doc?.findings ?? []).entries()) {
-    for (const key of ['title', 'body', 'suggestion', 'path']) check(`findings[${i}].${key}`, f?.[key]);
+    for (const key of ['title', 'body', 'suggestion', 'path', 'repo']) check(`findings[${i}].${key}`, f?.[key]);
   }
   return hits;
 };
@@ -88,6 +88,10 @@ export const validateFindings = (doc) => {
   if (!Array.isArray(doc.findings)) errors.push('"findings" must be an array.');
   for (const [i, f] of (doc.findings ?? []).entries()) {
     const at = `findings[${i}]`;
+    if (!f || typeof f !== 'object' || Array.isArray(f)) {
+      errors.push(`${at} must be an object.`);
+      continue;
+    }
     if (!f.title || typeof f.title !== 'string') errors.push(`${at}.title is required.`);
     if (!f.body || typeof f.body !== 'string') errors.push(`${at}.body is required.`);
     if (!SEVERITIES.includes(f.severity)) errors.push(`${at}.severity must be one of ${SEVERITIES.join(', ')}.`);
@@ -96,6 +100,7 @@ export const validateFindings = (doc) => {
       errors.push(`${at}.start_line must be a positive integer or null.`);
     }
     if (f.side != null && f.side !== 'LEFT' && f.side !== 'RIGHT') errors.push(`${at}.side must be LEFT or RIGHT.`);
+    if (f.repo != null && (typeof f.repo !== 'string' || !/^[\w.-]+\/[\w.-]+$/.test(f.repo))) errors.push(`${at}.repo must be owner/name or null.`);
   }
   return errors;
 };

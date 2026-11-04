@@ -92,6 +92,11 @@ test('validateFindings reports bad entries', () => {
     'findings[1].start_line must be a positive integer or null.',
     'findings[2].side must be LEFT or RIGHT.',
   ]);
+  assert.deepEqual(validateFindings({ findings: [null, 'x', finding({ repo: 'ghp_x y' }), finding({ repo: 'o/other' })] }), [
+    'findings[0] must be an object.',
+    'findings[1] must be an object.',
+    'findings[2].repo must be owner/name or null.',
+  ]);
   assert.deepEqual(validateFindings(null), ['The findings file must contain a JSON object.']);
 });
 
@@ -119,4 +124,5 @@ test('findSecrets flags private keys and token-shaped strings', () => {
   const key = ['-----BEGIN RSA', 'PRIVATE KEY-----'].join(' ');
   const hits = findSecrets({ summary: key, findings: [finding({ body: `token ghp_${'a'.repeat(30)}` })] });
   assert.deepEqual(hits, ['summary', 'findings[0].body']);
+  assert.deepEqual(findSecrets({ findings: [finding({ repo: `ghp_${'b'.repeat(30)}` })] }), ['findings[0].repo']);
 });

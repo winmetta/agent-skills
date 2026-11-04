@@ -12,7 +12,7 @@
 // Needs: git, gh (logged in, for reading the PR), and claude or codex (logged in).
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -160,7 +160,10 @@ export const main = async (argv) => {
   const top = git(resolve(values['repo-dir']), 'rev-parse', '--show-toplevel');
   const contextDirs = values.context.map((d) => resolve(d));
   for (const d of contextDirs) if (!existsSync(d)) throw new Error(`Context directory not found: ${d}`);
-  const outFile = resolve(values.out ?? join(tmpdir(), `local-pr-review-${repo.replace('/', '-')}-${number}.json`));
+  // A fresh private folder (mode 700), so another user on a shared machine cannot pre-create or symlink the file.
+  const outFile = resolve(
+    values.out ?? join(mkdtempSync(join(tmpdir(), 'local-pr-review-')), `${repo.replace('/', '-')}-${number}.json`),
+  );
 
   const pr = JSON.parse(
     run('gh', ['pr', 'view', String(number), '--repo', repo, '--json', 'title,body,url,baseRefName,headRefOid']).stdout,
