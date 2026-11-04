@@ -32,7 +32,27 @@ On the App's settings page open **Install App** (left sidebar) → choose the or
 
 ## 3. Private key
 
-Open the App's **Credentials** page, `https://github.com/organizations/<org>/settings/apps/<app-name>/key_pairs` (in older layouts, **Private keys** at the bottom of **General**), and click **Generate a private key**. A `.pem` file downloads. An App can have several keys, so generating one doesn't affect keys other developers use. Move it outside every repository and make it readable only by you:
+Every developer who posts reviews uses the same **App ID** (it is public, not a secret) and needs a **private key** on their machine. Anyone with a key can comment as the bot on every repository the App is installed on, so treat it like a password: never commit it, paste it into a chat or send it by email. Keys are managed on the App's **Credentials** page, `https://github.com/organizations/<org>/settings/apps/<app-name>/key_pairs` (in older layouts, **Private keys** at the bottom of **General**), by an organization owner or App manager. Developers who only run reviews need no App admin rights.
+
+Pick one of two ways to share access.
+
+### Option A: one key per developer (recommended)
+
+An owner or App manager clicks **Generate a private key** once per developer and gives each person their own `.pem`, through a password manager, not a chat. A GitHub App can have up to 25 keys.
+
+- Losing a laptop or someone leaving means revoking only that person's key; nobody else is affected.
+- GitHub lists keys only by fingerprint and creation date, so record whose key is whose (for example in the password manager entry) when generating it.
+
+### Option B: one shared key in a password manager
+
+An owner or App manager generates one key and stores the `.pem` file in a shared vault of the organization's password manager. Each developer downloads it from there.
+
+- Simpler to hand out, but if any copy leaks, the key must be revoked and a new one generated and shared with everyone.
+- Store the key as a file (a document attachment), not as pasted text, so line breaks are not lost. A useful entry also records the App ID, App name, installation and the Credentials page URL, and when the key was generated.
+
+### Install the key
+
+Whichever option you use, put the key outside every repository and make it readable only by you:
 
 ```bash
 mkdir -p ~/.config/local-pr-review
@@ -40,7 +60,7 @@ mv ~/Downloads/<app-name>.*.private-key.pem ~/.config/local-pr-review/app.pem
 chmod 600 ~/.config/local-pr-review/app.pem
 ```
 
-Anyone with this key can comment as the bot on every repository it is installed on. Never commit it or paste it into a chat. Another developer should generate their own key (and you revoke it on the same page when they leave), or you share one through a password manager.
+To revoke a key, delete it on the Credentials page. Tokens already created with it stay valid until they expire, at most an hour later.
 
 ## 4. Environment
 
