@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { commentableLines, commentBody, fingerprint, markersIn, planReview, reviewBody, validateFindings } from './post-review.mjs';
+import { commentableLines, commentBody, findSecrets, fingerprint, markersIn, planReview, reviewBody, validateFindings } from './post-review.mjs';
 
 const patch = [
   '@@ -1,3 +1,4 @@',
@@ -87,4 +87,30 @@ test('validateFindings reports bad entries', () => {
   const errors = validateFindings({ findings: [{ severity: 'urgent', line: 0 }] });
   assert.equal(errors.length, 4);
   assert.deepEqual(validateFindings(null), ['The findings file must contain a JSON object.']);
+});
+
+test('a suggestion whose range cannot be kept moves to the summary', () => {
+  const files = [{ filename: 'src/a.js', patch }];
+  const plan = planReview({
+    findings: [
+      finding({ title: 'Cross-hunk suggestion', line: 21, start_line: 3, suggestion: 'a\nb' }),
+      finding({ title: 'Start outside diff', line: 3, start_line: 99, suggestion: 'a\nb' }),
+      finding({ title: 'Start after end', line: 2, start_line: 3, suggestion: 'a' }),
+      finding({ title: 'One-line range', line: 2, start_line: 2, suggestion: 'a' }),
+      finding({ title: 'Valid range', line: 3, start_line: 1, suggestion: 'a\nb\nc' }),
+    ],
+    files,
+    repo: 'o/r',
+  });
+  assert.deepEqual(plan.inline.map((i) => i.finding.title), ['One-line range', 'Valid range']);
+  assert.equal(plan.inline[0].comment.start_line, undefined);
+  assert.equal(plan.inline[1].comment.start_line, 1);
+  assert.equal(plan.summary.length, 3);
+});
+
+test('findSecrets flags private keys and token-shaped strings', () => {
+  assert.deepEqual(findSecrets({ summary: 'ok', findings: [finding()] }), []);
+  const key = ['-----BEGIN RSA', 'PRIVATE KEY-----'].join(' ');
+  const hits = findSecrets({ summary: key, findings: [finding({ body: `token ghp_${'a'.repeat(30)}` })] });
+  assert.deepEqual(hits, ['summary', 'findings[0].body']);
 });

@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, makeAppJwt, parsePr } from './github.mjs';
-import { buildPrompt, claudeArgs, findRemote, parseClaudeOutput } from './run-review.mjs';
+import { buildPrompt, claudeArgs, secretPaths, findRemote, parseClaudeOutput } from './run-review.mjs';
 
 test('makeAppJwt signs an RS256 token GitHub accepts', () => {
   const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -72,4 +72,11 @@ test('buildPrompt fences the description with an unguessable tag', () => {
   const make = () => buildPrompt({ pr, repo: 'o/r', number: 1, baseRef: 'b', contextDirs: [], rubric: 'R' });
   const fence = make().match(/<(pr-description-[0-9a-f]{16})>/)[1];
   assert.notEqual(fence, make().match(/<(pr-description-[0-9a-f]{16})>/)[1]);
+});
+
+test('claudeArgs denies reading credentials, including a custom App key path', () => {
+  const args = claudeArgs({ baseRef: 'b', contextDirs: [], model: null, keyPath: '/keys/app.pem' });
+  const denied = args[args.indexOf('--disallowedTools') + 1].split(',');
+  for (const p of ['~/.config/pr-review/**', '~/.ssh/**', '~/.config/gh/**', '//keys/app.pem']) assert.ok(denied.includes(`Read(${p})`), p);
+  assert.ok(secretPaths('relative.pem').every((p) => !p.endsWith('relative.pem')));
 });

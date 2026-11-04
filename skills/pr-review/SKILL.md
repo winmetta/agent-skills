@@ -9,6 +9,17 @@ Reviews a GitHub PR on this machine, with the agent's own subscription login ins
 
 Needs Node 20+, `git`, the `gh` CLI (logged in, used to read the PR) and, for headless runs, `claude` or `codex` (logged in). Posting needs a GitHub App: if `PR_REVIEW_APP_ID` is not set, follow [references/github-app-setup.md](references/github-app-setup.md) with the user first. A dry run works without it.
 
+## Log in to the engine first
+
+A headless run uses the engine's own subscription login, and fails with "Failed to authenticate" (Claude) or an authentication error (Codex) when it has expired. Check and, if needed, sign in from your own terminal (it opens a browser, so an agent cannot do it for you):
+
+```bash
+claude auth status   # or: claude auth login
+codex login status   # or: codex login
+```
+
+Only the engine you pass to `--engine` needs to be logged in. `gh auth login` is separate: it is used to read the PR, not to post (posting uses the GitHub App).
+
 `<skill-dir>` below is the folder this file is in.
 
 ## Choose how to run it
@@ -20,6 +31,7 @@ Needs Node 20+, `git`, the `gh` CLI (logged in, used to read the PR) and, for he
   ```
 
   It checks out the PR head in a sibling worktree `<repo>-pr-<n>`, runs the engine read-only (for Claude: no project settings, hooks or MCP servers from the PR, and only exact `git diff` commands) with [references/review-rubric.md](references/review-rubric.md), validates the findings against [assets/findings.schema.json](assets/findings.schema.json), saves them to the system temp folder, prints a dry run, and removes the worktree. Add `--post` to post; `--keep-worktree` to keep the checkout.
+
 - **In this session (when the user asks you to review a PR):** follow the steps below. You do the reviewing; the scripts only post.
 
 ## Steps
@@ -33,6 +45,7 @@ Needs Node 20+, `git`, the `gh` CLI (logged in, used to read the PR) and, for he
    ```
 
    Tell the user you created it. If the repository's own docs say where worktrees go, follow them.
+
 3. **Review** `git diff refs/pr-review/base-<n>...HEAD` in the worktree, following [references/review-rubric.md](references/review-rubric.md). Read the callers and the related repositories the user named (or that the diff clearly depends on) before reporting anything. Change no files.
 4. **Write the findings** to a JSON file outside the repositories (e.g. the system temp folder) matching [assets/findings.schema.json](assets/findings.schema.json): a `summary` and a `findings` array. Line numbers are in the PR head version of the file.
 5. **Dry run and show the user:**
@@ -55,4 +68,5 @@ Needs Node 20+, `git`, the `gh` CLI (logged in, used to read the PR) and, for he
 
 - `node <skill-dir>/scripts/app-token.mjs --repo <owner>/<repo>` confirms the App can act on a repository; it never prints the token.
 - Never print, log or paste the App's private key or a token, and never put either in a repository.
+- The reviewer reads an untrusted checkout, so a prompt-injected model could try to copy a credential into a finding. `post-review.mjs` refuses to post findings that contain a private key or a token-shaped string, and Claude runs with its Read access to `~/.config/pr-review`, `~/.config/gh`, `~/.ssh`, `~/.aws` and `~/.gnupg` denied. Codex's read-only sandbox can still read the whole filesystem, so for Codex the scan is the only guard: read the dry run before posting, and review pull requests from forks with extra care.
 - Run a dry run before every post, and post only when the user asked to.

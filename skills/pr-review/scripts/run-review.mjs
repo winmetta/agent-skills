@@ -14,10 +14,10 @@ import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { parsePr } from './github.mjs';
+import { loadConfig, parsePr } from './github.mjs';
 import { main as postReview, validateFindings } from './post-review.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -80,7 +80,19 @@ export const parseClaudeOutput = (stdout) => {
 // Claude Code arguments for a read-only review. The PR checkout is untrusted, so project settings (hooks),
 // MCP servers and slash commands from it are not loaded, and Bash is limited to exact git commands:
 // git diff, log and show accept --output=<file>, which would write a file.
-export const claudeArgs = ({ baseRef, contextDirs, model }) => [
+// Files the reviewer must never read: a prompt-injected model could copy a credential into a finding.
+export const secretPaths = (keyPath = loadConfig().keyPath) => [
+  '~/.config/pr-review/**',
+  '~/.config/gh/**',
+  '~/.ssh/**',
+  '~/.aws/**',
+  '~/.gnupg/**',
+  '~/.codex/auth.json',
+  '~/.claude/.credentials.json',
+  ...(isAbsolute(keyPath) ? [`/${keyPath}`] : []),
+];
+
+export const claudeArgs = ({ baseRef, contextDirs, model, keyPath }) => [
   '-p',
   '--output-format', 'json',
   '--json-schema', readFileSync(SCHEMA_PATH, 'utf8'),
@@ -99,7 +111,8 @@ export const claudeArgs = ({ baseRef, contextDirs, model }) => [
     'Bash(git blame:*)',
     'Bash(git ls-files:*)',
   ].join(','),
-  '--disallowedTools', 'Edit,Write,NotebookEdit,WebFetch,WebSearch,Bash(git * --output*)',
+  '--disallowedTools',
+  ['Edit', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch', 'Bash(git * --output*)', ...secretPaths(keyPath).map((p) => `Read(${p})`)].join(','),
   '--no-session-persistence',
   ...contextDirs.flatMap((d) => ['--add-dir', d]),
   ...(model ? ['--model', model] : []),
@@ -107,7 +120,10 @@ export const claudeArgs = ({ baseRef, contextDirs, model }) => [
 
 const reviewWith = ({ engine, cwd, prompt, baseRef, contextDirs, model, outFile }) => {
   if (engine === 'claude') {
-    return parseClaudeOutput(run('claude', claudeArgs({ baseRef, contextDirs, model }), { cwd, input: prompt }).stdout);
+    // claude -p reports its errors (expired login, usage limit) as JSON on stdout with exit code 1.
+    const res = run('claude', claudeArgs({ baseRef, contextDirs, model }), { cwd, input: prompt, allowFail: true });
+    if (res.status !== 0 && !res.stdout.trim()) throw new Error(`claude exited with ${res.status}`);
+    return parseClaudeOutput(res.stdout);
   }
   const args = [
     'exec',

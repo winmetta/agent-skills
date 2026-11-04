@@ -58,6 +58,30 @@ export const markerFor = (fp) => `<!-- ${MARK}:fp=${fp} -->`;
 export const headMarker = (sha) => `<!-- ${MARK}:head=${sha} -->`;
 export const markersIn = (text) => [...String(text ?? '').matchAll(new RegExp(`<!-- ${MARK}:fp=([0-9a-f]+) -->`, 'g'))].map((m) => m[1]);
 
+// Text that looks like a credential. The reviewer reads an untrusted checkout, so a prompt-injected model
+// could copy a key it can read into a finding, and posting would publish it. Refuse instead of posting.
+const SECRET_PATTERNS = [
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\bgh[pousr]_[A-Za-z0-9]{20,}/,
+  /\bgithub_pat_[A-Za-z0-9_]{20,}/,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /\bsk-[A-Za-z0-9_-]{20,}/,
+  /\bxox[abprs]-[A-Za-z0-9-]{10,}/,
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/,
+];
+
+export const findSecrets = (doc) => {
+  const hits = [];
+  const check = (label, text) => {
+    if (typeof text === 'string' && SECRET_PATTERNS.some((re) => re.test(text))) hits.push(label);
+  };
+  check('summary', doc?.summary);
+  for (const [i, f] of (doc?.findings ?? []).entries()) {
+    for (const key of ['title', 'body', 'suggestion', 'path']) check(`findings[${i}].${key}`, f?.[key]);
+  }
+  return hits;
+};
+
 export const validateFindings = (doc) => {
   const errors = [];
   if (!doc || typeof doc !== 'object') return ['The findings file must contain a JSON object.'];
@@ -108,7 +132,14 @@ export const planReview = ({ findings, files, repo, posted = new Set() }) => {
     }
     const comment = { path: f.path, line: f.line, side, body: commentBody(f, { inline: true }) };
     const start = f.start_line;
-    if (Number.isInteger(start) && start < f.line && lines.get(start) === lines.get(f.line)) {
+    const hasRange = start != null && start !== f.line;
+    const rangeOk = Number.isInteger(start) && start < f.line && lines.has(start) && lines.get(start) === lines.get(f.line);
+    if (hasRange && !rangeOk && f.suggestion) {
+      // GitHub would apply a multi-line suggestion to the single line, duplicating or corrupting code.
+      plan.summary.push({ ...f, reason: 'suggested range is not inside one diff hunk' });
+      continue;
+    }
+    if (hasRange && rangeOk) {
       comment.start_line = start;
       comment.start_side = side;
     }
@@ -170,6 +201,12 @@ export const main = async (argv) => {
   const errors = validateFindings(doc);
   if (errors.length) {
     for (const e of errors) console.error(e);
+    return 1;
+  }
+
+  const secrets = findSecrets(doc);
+  if (secrets.length) {
+    console.error(`Refusing to post: ${secrets.join(', ')} look like a credential or private key. Remove it from the findings file.`);
     return 1;
   }
 
