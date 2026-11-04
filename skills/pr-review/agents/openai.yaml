@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Review"
+  short_description: "Review PRs locally and post findings as a bot"
+  default_prompt: "Use $pr-review to review this pull request and post the findings as the review bot."
