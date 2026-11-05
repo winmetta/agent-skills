@@ -61,11 +61,17 @@ Keep evals outside the skill folder, so installers (`npx skills`, plugins) don't
    ```
 
    It prints pass rate, tokens and time for each configuration (mean ± standard deviation), a per-eval table, the difference between `with_skill` and the baseline, and notes: expectations that pass in every configuration (they don't measure the skill), expectations that always fail (check the expectation too), and evals whose repeated runs disagree (flaky). Add `--json` for machine-readable output.
-7. **Show the user the outputs, not just the numbers.** Put each prompt next to what each version produced and ask what they would change. No comment on a case means it was fine.
+7. **Look for patterns the averages hide** before drawing conclusions:
+   - **Expectations that don't measure the skill:** they pass in every configuration, including the baseline, so they say nothing about whether the skill helps. Replace them with ones that only a correct use of the skill would pass.
+   - **Better but costlier:** a higher pass rate that comes with much more time or tokens may not be worth it. Report both, and look in the transcripts for the steps that cost the most.
+   - **Wins and losses that cancel out:** compare per eval, not just the totals. A skill that fixes two cases and breaks one needs a look at the broken one.
+   - **High spread:** a large standard deviation, or an eval whose runs disagree, means the result is luck. Run it more times or make the instruction behind it clearer before you tune on it.
+   - **Errors and timeouts:** a run that failed for an outside reason (rate limit, missing tool) is not a skill failure. Exclude it and rerun.
+8. **Show the user the outputs, not just the numbers.** Put each prompt next to what each version produced and ask what they would change. No comment on a case means it was fine.
 
 ## 3. Grading
 
-Grade in a separate subagent where possible, so the grader has not seen the skill's intent. Give it the expectations, the run's transcript (if saved) and its output files. Rules for the grader:
+Grade in a separate subagent where possible, so the grader has not seen the skill's intent. Give it the expectations, the run's transcript (if saved) and its output files, using the ready-made prompt in [grader-prompt.md](grader-prompt.md) so every run is graded the same way. Rules for the grader:
 
 - **Pass only with evidence.** Quote the transcript or the output that shows it. If it can't be verified, it fails.
 - **Substance, not surface.** A file with the right name and the wrong content fails. So does an output that meets the wording by accident.
@@ -105,8 +111,20 @@ Tune the description once the skill itself works.
    - Skip trivial one-step requests; agents answer those without any skill.
 2. **Review the list with the user**, because a bad query set tunes the description in the wrong direction.
 3. **Hold some back.** Set aside about a third of the queries and tune only on the rest. Judge each new description on the held-back ones too, so it is not overfitted to the queries you looked at.
-4. **Measure.** For each query, ask a fresh subagent: "Here are the available skills, as name and description. Which one, if any, would you load for this request?" Give it this skill and its realistic neighbours (the other skills in the repo or installed). Run each query a few times, because the answer varies. This approximates the real choice; confirm the result in the real tool on a few queries. In Claude Code, Anthropic's `skill-creator` skill has scripts that run this loop against the real CLI (`claude -p`) and propose descriptions.
-5. **Revise and repeat** a few times: read which queries were wrong, change the description to fix the cause (not by listing the failing queries), and keep the version that scores best on the held-back queries. Show the user the old and new descriptions with the scores. If `agents/openai.yaml` text no longer matches, update it.
+4. **Measure.**
+   - **In Claude Code (or anywhere the `claude` CLI is logged in),** run the queries against the real tool:
+
+     ```bash
+     node <skill-dir>/scripts/run-triggers.mjs <skill-folder> --triggers <evals-folder>/triggers.json \
+       [--description "<candidate>"] [--model <model>] [--neighbours <skills-folder>]
+     ```
+
+     It runs each query 3 times (`--runs`) in a fresh `claude -p`, in a throwaway project holding a copy of the skill and links to your other user-level skills, and stops at the model's first tool call. User settings are turned off for these runs, so an installed copy of the same skill can't answer in its place; a plugin copy still can, and the report says so. It reports, for the tuning and held-back queries separately (`--holdout`, a third by default, always the same third), how many were right, precision (it loaded only when it should) and recall (it loaded whenever it should), then each query's hit rate and any other skill that was picked instead. `--description` tests a candidate without editing `SKILL.md`. `--neighbours` adds a folder of competing skills (for a catalog, its `skills/` folder); your installed user-level skills are always present, as in real use. `--json` gives machine-readable output.
+   - **Use the model people use.** Which skill gets picked depends on the model, so pass the model your users run (`--model`). Without it, the runner uses the `model` in `~/.claude/settings.json`, or the CLI's default.
+   - **The name counts too.** The model sees the skill's name as well as its description, so a clear name can carry queries a weak description misses. Tune the description with the real name in place, as the runner does.
+   - **Cost:** each run is one short model turn, so 20 queries × 3 runs is 60 calls. Start with `--runs 1` while the queries are still changing.
+   - **In other agents (Codex),** ask a fresh subagent for each query: "Here are the available skills, as name and description. Which one, if any, would you load for this request?" Give it this skill and its realistic neighbours. Run each query a few times, because the answer varies. This only approximates the real choice; confirm a few queries in the real tool.
+5. **Revise and repeat** a few times: read which queries were wrong and which skill was picked instead, change the description to fix the cause (not by listing the failing queries), and test each candidate with `--description`. Keep the version that scores best on the held-back queries. Show the user the old and new descriptions with the scores. If `agents/openai.yaml` text no longer matches, update it.
 
 ## 6. Without subagents
 

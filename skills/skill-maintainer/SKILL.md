@@ -17,7 +17,8 @@ Both Claude Code and Codex follow symlinked skill folders. References, each read
 
 - [references/formats.md](references/formats.md): the format rules, the `agents/openai.yaml` fields, install options and sources. Read it before writing frontmatter or `openai.yaml`.
 - [references/writing.md](references/writing.md): what makes a skill good (the description, the body, resources, scope and safety). Read it before drafting or reworking a skill.
-- [references/testing.md](references/testing.md): running a skill on realistic requests, grading, improving from feedback, and tuning the description. Read it before testing or improving a skill.
+- [references/testing.md](references/testing.md): running a skill on realistic requests, grading, improving from feedback, and tuning the description (with `scripts/run-triggers.mjs` against the real Claude CLI). Read it before testing or improving a skill.
+- [references/grader-prompt.md](references/grader-prompt.md): the prompt to give a grading subagent. Read it when grading eval runs.
 - [references/repo-setup.md](references/repo-setup.md): wiring the checks into a repo's hooks or CI.
 
 The scripts need Node 20 or later and no packages. They find the repo from the working directory, so run them from inside the repo. `<skill-dir>` below means this skill's folder, wherever it is installed. For example:
