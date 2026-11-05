@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, makeAppJwt, parsePr } from './github.mjs';
-import { buildPrompt, claudeArgs, secretPaths, findRemote, parseClaudeOutput } from './run-review.mjs';
+import { applyVerdicts, buildPrompt, buildVerifyPrompt, claudeArgs, codexArgs, DEFAULT_VERIFY_MODEL, secretPaths, VERDICT_SCHEMA_PATH, findRemote, parseClaudeOutput } from './run-review.mjs';
 
 test('makeAppJwt signs an RS256 token GitHub accepts', () => {
   const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -85,4 +85,35 @@ test('claudeArgs denies reading credentials, including a custom App key path', (
   const denied = args[args.indexOf('--disallowedTools') + 1].split(',');
   for (const p of ['~/.config/local-pr-review/**', '~/.ssh/**', '~/.config/gh/**', '//keys/app.pem']) assert.ok(denied.includes(`Read(${p})`), p);
   assert.ok(secretPaths('relative.pem').every((p) => !p.endsWith('relative.pem')));
+});
+
+test('the verify pass uses the verdict schema and low effort for each engine', () => {
+  const claude = claudeArgs({ baseRef: 'b', contextDirs: [], model: 'sonnet', effort: 'low', schemaPath: VERDICT_SCHEMA_PATH });
+  assert.match(claude[claude.indexOf('--json-schema') + 1], /"verdicts"/);
+  assert.deepEqual(claude.slice(-4), ['--model', 'sonnet', '--effort', 'low']);
+  assert.ok(!claudeArgs({ baseRef: 'b', contextDirs: [], model: null }).includes('--effort'));
+  const codex = codexArgs({ cwd: '/w', model: 'gpt-6.1-terra', effort: 'low', schemaPath: VERDICT_SCHEMA_PATH, outFile: '/o.json' });
+  assert.deepEqual(codex.slice(codex.indexOf('--model')), ['--model', 'gpt-6.1-terra', '-c', 'model_reasoning_effort="low"', '-']);
+  assert.equal(codex[codex.indexOf('--output-schema') + 1], VERDICT_SCHEMA_PATH);
+  assert.deepEqual(DEFAULT_VERIFY_MODEL, { claude: 'sonnet', codex: 'gpt-6.1-terra' });
+});
+
+test('applyVerdicts drops rejected findings and keeps ones without a verdict', () => {
+  const findings = [{ title: 'a' }, { title: 'b' }, { title: 'c' }];
+  const { kept, dropped, unchecked } = applyVerdicts(findings, [
+    { index: 0, keep: true, reason: 'real' },
+    { index: 1, keep: false, reason: 'pre-existing' },
+  ]);
+  assert.deepEqual(kept.map((f) => f.title), ['a', 'c']);
+  assert.deepEqual(dropped, [{ finding: { title: 'b' }, reason: 'pre-existing' }]);
+  assert.deepEqual(unchecked.map((f) => f.title), ['c']);
+  assert.equal(applyVerdicts(findings, undefined).kept.length, 3);
+});
+
+test('buildVerifyPrompt lists findings by index with the rubric', () => {
+  const p = buildVerifyPrompt({ findings: [{ severity: 'low', title: 'T', body: 'B', path: 'a.js', line: 3, repo: null, suggestion: 'x' }], baseRef: 'refs/x', rubric: 'RUBRIC' });
+  assert.match(p, /"index": 0/);
+  assert.match(p, /git diff refs\/x\.\.\.HEAD/);
+  assert.match(p, /RUBRIC$/);
+  assert.doesNotMatch(p, /"suggestion"/);
 });

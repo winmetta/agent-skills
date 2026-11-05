@@ -1,0 +1,18 @@
+[
+  { "query": "review my uncommitted changes before I commit", "should_trigger": true },
+  { "query": "can you look over what I've staged in git and tell me if anything is broken?", "should_trigger": true },
+  { "query": "review the last 3 commits on this branch locally, I haven't pushed yet", "should_trigger": true },
+  { "query": "do a quick code review of everything on feat/billing-export compared to main before I open the PR", "should_trigger": true },
+  { "query": "I just rewrote src/sync/merge.ts, is the new code too complex? any bugs?", "should_trigger": true },
+  { "query": "check my diff for bugs, especially the new retry loop in scripts/deploy.sh", "should_trigger": true },
+  { "query": "before I push, review commit a1b2c3d for anything I missed", "should_trigger": true },
+  { "query": "go through my working tree changes and flag functions that got too long or branchy", "should_trigger": true },
+  { "query": "review PR winmetta/agent-skills#9 and post the findings as our review bot", "should_trigger": false },
+  { "query": "write the PR description for my branch feat/add-login", "should_trigger": false },
+  { "query": "fix the shellcheck warnings in scripts/deploy.sh", "should_trigger": false },
+  { "query": "refactor src/sync/merge.ts to be simpler, go ahead and change it", "should_trigger": false },
+  { "query": "what does git diff --cached show?", "should_trigger": false },
+  { "query": "write unit tests for the parseInvoice function in billing/parse.py", "should_trigger": false },
+  { "query": "commit my changes with a good conventional commit message", "should_trigger": false },
+  { "query": "explain how the merge step in src/sync/merge.ts works", "should_trigger": false }
+]

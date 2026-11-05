@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Verdicts on review findings",
+  "description": "One verdict per finding, by its index in the findings list. Strict, as Codex --output-schema requires.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdicts"],
+  "properties": {
+    "verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["index", "keep", "reason"],
+        "properties": {
+          "index": { "type": "integer", "description": "The finding's 0-based index in the list given." },
+          "keep": { "type": "boolean", "description": "true if the finding is real, introduced by the change and meets the rubric's evidence bar." },
+          "reason": { "type": "string", "description": "One line: why it is kept or dropped." }
+        }
+      }
+    }
+  }
+}

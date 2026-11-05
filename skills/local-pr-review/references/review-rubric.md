@@ -1,28 +1,57 @@
 # Review rubric
 
-Review the change the PR makes, not the code it leaves alone. Every finding must be something the author should act on before merging; the author has to resolve each one, so noise costs them real time.
+Shared by `local-code-review` and `local-pr-review`; the two copies must stay identical.
 
-## Look for
+You already know what bugs and security holes look like. This rubric is about what to leave out and how sure to be, because every finding costs the author time to read, check and answer.
 
-1. **Correctness:** logic errors, wrong conditions, off-by-one, unhandled `null`/error paths, race conditions, broken edge cases (empty input, large input, Unicode, time zones).
-2. **Security and privacy:** injection, missing authorization checks, secrets or personal data in code, logs or URLs, unsafe deserialization, overly broad permissions.
-3. **Contracts across code and repositories:** changed function signatures, API shapes, config keys, environment variables, database schemas or file formats whose other users (in this repository or the related ones you were given) were not updated.
-4. **Data and migrations:** irreversible changes without a path back, migrations that lock or lose data, changed defaults.
-5. **Tests:** new behaviour or a fixed bug with no test, or tests that would still pass if the code were wrong.
-6. **The repository's own rules** in `AGENTS.md`, `CLAUDE.md` or `CONTRIBUTING.md`, when the change breaks one.
+## Scope
 
-## Leave out
+- Review what the change adds or makes worse: the added and removed lines, and code they make newly reachable or newly wrong. Read as much surrounding code and as many callers as you need, but report on the change.
+- Do not report problems that were already there, unless the change makes them worse or easier to hit.
 
-- Style, formatting and naming that a linter or formatter in the repository already checks.
-- Preferences ("I would have…") with no concrete failure.
-- Anything you have not checked in the code: read the surrounding code and the callers before reporting.
-- Problems in code the PR does not touch, unless the PR makes them worse or newly reachable.
+## Do not report
 
-## Writing a finding
+- Style, formatting, naming or import order.
+- Anything the repository's linters, formatters or type checker already enforce, and code they are told to ignore (`eslint-disable`, `# noqa`, `# shellcheck disable=`, `@ts-expect-error` with a reason).
+- Preferences with no concrete failure ("I would have…", "consider using…").
+- Changes the commit messages, PR description or comments say are intentional.
+- Speculation about code you did not read ("this might break callers"): find the callers or drop it.
+- Requests to "verify", "ensure" or "double-check" something. Check it yourself, then report what you found or nothing.
+- A restatement of what the code does, praise, or a summary of the change.
 
-- **Severity:** `high` for bugs, security holes, data loss or broken contracts; `medium` for likely problems and missing tests; `low` for minor but real issues. If you would not block a merge on it and it is not a real improvement, drop it.
-- **Title:** the problem in one line, not the fix ("Retries never stop when the token is revoked").
-- **Body:** what is wrong, a concrete scenario where it fails (input, state, result), and how to fix it. Quote the minimum code needed.
-- **Location:** `path` relative to the repository root, `line` in the PR's head version of the file (`side: RIGHT`), or in the base version for a deleted line (`side: LEFT`). Use `start_line` for a range. Point at the line that needs to change, which should be in the diff where possible; findings elsewhere are still posted, in the review summary.
-- **Suggestion:** only when you know the exact replacement for those lines, complete and correctly indented.
-- One finding per problem; merge duplicates. No findings is a valid result.
+## Evidence bar
+
+Report a finding only if all of these hold:
+
+- **Bug:** you can name the input or state that triggers it and what goes wrong. "Breaks callers" needs the caller's `path:line`.
+- **Repository rule:** you can quote the rule and name the file it comes from.
+- **Complexity:** a measured number from the repository's tool, or counts you made under "Complexity" below.
+- **Worth fixing:** the author would fix it if told, and the fix needs no more rigour than the rest of the codebase has.
+
+## Repository rules
+
+Read `AGENTS.md`, `CLAUDE.md` and `CONTRIBUTING.md` at the repository root and in the directories of each changed file, up to the root. A rule in a nearer file wins for the files under it. Report a broken rule only when the change breaks it.
+
+## Complexity
+
+Report a function the change adds, or makes longer or more branched, when it is too complex. Do not report functions the change leaves as they were.
+
+1. **Use the repository's own tool when it has one.** Look in lint configs (`eslint.config.*`, `.eslintrc*`, `pyproject.toml`, `ruff.toml`, `setup.cfg`), `package.json` scripts, `Makefile`, `mise.toml` tasks, pre-commit or lefthook hooks and CI workflows for complexity rules or tools: ESLint `complexity`, `max-depth`, `max-lines-per-function`, `max-params`, `sonarjs/cognitive-complexity`, ruff `C901` or `PLR0912`/`PLR0913`/`PLR0915`, lizard, radon, xenon, complexipy, shellmetrics. Run it the way the repository does, on the changed files, using the repository's thresholds. If it can't run (not installed, needs a build), say so and use the next step.
+2. **Otherwise count yourself.** Flag a function that, after the change, has any of:
+   - more than about 10 decision points: `if`/`elif`/`else if`, each `case` or `match` arm, loops, `catch`/`except`, ternaries, `&&`/`||`/`and`/`or` in conditions (in shell, `&&`/`||` chains too);
+   - nesting deeper than 3 levels of blocks;
+   - more than about 60 lines of code;
+   - more than 5 parameters.
+3. **Report** the function, the numbers, and one concrete refactor that fits it: guard clauses or early returns, extracting a named step, a lookup table instead of a long `if`/`case` chain, or splitting a function that does two jobs. Severity is `low`, or `medium` when it is far over (twice a threshold) or the code is hard to test. Never `high`.
+
+These thresholds follow common defaults: McCabe's limit of 10 (NIST SP 500-235), ESLint `max-depth` 4 and `max-lines-per-function` 50, and ruff/Pylint `max-args` 5 (checked 2026-11-04).
+
+## Writing findings
+
+- **Severity:** `high` for a bug that loses data, breaks a contract or opens a security hole on a realistic path; `medium` for a likely bug, a broken repository rule or a missing test for changed behaviour; `low` for minor but real issues and complexity. Not everything is `high`.
+- **Title:** the problem in one line, not the fix.
+- **Body:** what is wrong, the failing case, and how to fix it, quoting at most a few lines of code.
+- **Location:** `path` relative to the repository root and `line` in the new version of the file (`side: RIGHT`), or the old version for a removed line (`side: LEFT`), with `start_line` for a range.
+- **Suggestion:** only when you know the exact replacement for those lines.
+- One finding per problem. Report a repeated problem once and list every place it occurs.
+- No findings is a valid result.

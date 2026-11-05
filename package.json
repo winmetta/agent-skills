@@ -9,6 +9,6 @@
   },
   "scripts": {
     "test": "node scripts/run-tests.mjs",
-    "check": "node skills/skill-maintainer/scripts/check-skills.mjs --catalog skills"
+    "check": "node skills/skill-maintainer/scripts/check-skills.mjs --catalog skills && node scripts/check-shared-files.mjs"
   }
 }
