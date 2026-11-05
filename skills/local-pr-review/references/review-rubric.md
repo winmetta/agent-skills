@@ -1,6 +1,6 @@
 # Review rubric
 
-Shared by `local-code-review` and `local-pr-review`; the two copies must stay identical.
+Shared by `local-change-review` and `local-pr-review`; the two copies must stay identical.
 
 You already know what bugs and security holes look like. This rubric is about what to leave out and how sure to be, because every finding costs the author time to read, check and answer.
 
@@ -25,12 +25,24 @@ Report a finding only if all of these hold:
 
 - **Bug:** you can name the input or state that triggers it and what goes wrong. "Breaks callers" needs the caller's `path:line`.
 - **Repository rule:** you can quote the rule and name the file it comes from.
+- **Docs:** the doc's `path:line` and the code, command or other doc it contradicts, or the link or path that does not resolve.
+- **Config or infrastructure:** the setting or resource, and what happens when it is applied or deployed (what gets replaced, opened, exposed or billed).
 - **Complexity:** a measured number from the repository's tool, or counts you made under "Complexity" below.
 - **Worth fixing:** the author would fix it if told, and the fix needs no more rigour than the rest of the codebase has.
 
 ## Repository rules
 
 Read `AGENTS.md`, `CLAUDE.md` and `CONTRIBUTING.md` at the repository root and in the directories of each changed file, up to the root. A rule in a nearer file wins for the files under it. Report a broken rule only when the change breaks it.
+
+## Docs, config and infrastructure
+
+Changes that are not code get the same scope and evidence bar. Report, when the change causes it:
+
+- **Docs:** a statement that contradicts the code, a command or another doc in the repository; a command, flag, path, link or anchor that no longer works as written; steps left out of order or missing a prerequisite the reader needs. Check them as far as your tools allow: read the code, resolve the paths, and run read-only commands only where you are allowed to.
+- **Config:** a value the program does not read or rejects, a key renamed on one side only, a default changed without the callers that rely on it, settings that differ between environments by mistake.
+- **Infrastructure as code** (Terraform, Pulumi, CloudFormation, Kubernetes, CI workflows, Dockerfiles): a resource that will be destroyed or replaced, data that can be lost, network or IAM access opened wider than needed, a secret in plain text, a large cost increase, a pinned version or image dropped, or a workflow that now runs with more permissions or on untrusted input. Use the repository's own plan or preview output when it is available; don't apply anything.
+
+Do not report wording, tone or formatting in docs, or values that are a matter of choice (instance size, timeouts) without a concrete failure.
 
 ## Complexity
 

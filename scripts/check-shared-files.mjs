@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const SHARED = [
-  ['skills/local-code-review/references/review-rubric.md', 'skills/local-pr-review/references/review-rubric.md'],
+  ['skills/local-change-review/references/review-rubric.md', 'skills/local-pr-review/references/review-rubric.md'],
 ];
 
 export function sharedProblems(groups = SHARED, read = (p) => readFileSync(join(root, p), 'utf8')) {

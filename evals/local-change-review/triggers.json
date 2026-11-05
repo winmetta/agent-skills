@@ -7,6 +7,9 @@
   { "query": "check my diff for bugs, especially the new retry loop in scripts/deploy.sh", "should_trigger": true },
   { "query": "before I push, review commit a1b2c3d for anything I missed", "should_trigger": true },
   { "query": "go through my working tree changes and flag functions that got too long or branchy", "should_trigger": true },
+  { "query": "review my README and docs/setup.md edits before I commit, do the commands still work?", "should_trigger": true },
+  { "query": "check the Terraform change I just made in infra/network.tf for anything risky", "should_trigger": true },
+  { "query": "look over my staged changes to the GitHub Actions workflow and docker-compose.yml", "should_trigger": true },
   { "query": "review PR winmetta/agent-skills#9 and post the findings as our review bot", "should_trigger": false },
   { "query": "write the PR description for my branch feat/add-login", "should_trigger": false },
   { "query": "fix the shellcheck warnings in scripts/deploy.sh", "should_trigger": false },
@@ -14,5 +17,7 @@
   { "query": "what does git diff --cached show?", "should_trigger": false },
   { "query": "write unit tests for the parseInvoice function in billing/parse.py", "should_trigger": false },
   { "query": "commit my changes with a good conventional commit message", "should_trigger": false },
-  { "query": "explain how the merge step in src/sync/merge.ts works", "should_trigger": false }
+  { "query": "explain how the merge step in src/sync/merge.ts works", "should_trigger": false },
+  { "query": "write a README section explaining how to deploy the app", "should_trigger": false },
+  { "query": "run terraform plan for the staging workspace", "should_trigger": false }
 ]
