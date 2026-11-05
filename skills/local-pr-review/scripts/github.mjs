@@ -53,6 +53,15 @@ export const request = async (method, path, { token, body, base = apiUrl() } = {
   return data;
 };
 
+// GraphQL lives at /graphql on github.com and at /api/graphql on GitHub Enterprise Server (REST: /api/v3).
+export const graphqlUrl = (base = apiUrl()) => (/\/api\/v3$/.test(base) ? `${base.replace(/\/v3$/, '')}/graphql` : `${base}/graphql`);
+
+export const graphql = async (query, variables, { token, base = apiUrl() } = {}) => {
+  const res = await request('POST', graphqlUrl(base), { token, body: { query, variables } });
+  if (res?.errors?.length) throw new Error(`GraphQL query failed: ${res.errors.map((e) => e.message).join('; ')}`);
+  return res.data;
+};
+
 // Follows page=N until a short page; GitHub caps PR files at 3000 (30 pages of 100).
 export const paginate = async (path, opts, maxPages = 30) => {
   const all = [];

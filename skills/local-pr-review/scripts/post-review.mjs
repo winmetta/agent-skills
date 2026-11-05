@@ -3,6 +3,7 @@
 // Findings on lines inside the PR's diff become inline threads, which the author must resolve; the rest
 // (lines outside the diff, files not in the PR, other repositories) go into the review's summary.
 // Findings the bot already posted on this PR (matched by a hidden fingerprint) are not posted again.
+// After posting it runs approve.mjs, which adds the bot's 👍 to the PR when nothing is left to fix.
 // Usage: post-review.mjs --pr owner/repo#123 --findings findings.json [--reviewer claude] [--head <sha>] [--dry-run]
 //   --findings  JSON matching assets/findings.schema.json; "-" reads standard input
 //   --head      the commit that was reviewed; posting is refused if the PR head has moved since
@@ -13,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { describe as describeApproval, newCountMarker, syncApproval } from './approve.mjs';
 import { appInstallationAuth, ghCliToken, hasAppConfig, loadConfig, paginate, parsePr, request } from './github.mjs';
 
 export const SEVERITIES = ['high', 'medium', 'low'];
@@ -177,7 +179,7 @@ export const reviewBody = ({ plan, summary, headSha, reviewer, inlineFallback = 
   if (plan.inline.length || plan.summary.length) {
     lines.push('', 'Fix each finding and resolve its thread, or reply to explain why it does not apply.');
   }
-  lines.push('', headMarker(headSha));
+  lines.push('', headMarker(headSha), newCountMarker(plan.inline.length + plan.summary.length));
   return lines.join('\n');
 };
 
@@ -270,6 +272,12 @@ export const main = async (argv) => {
     review = await post(reviewBody({ plan: fallback, summary: doc.summary, headSha, reviewer: values.reviewer, inlineFallback: true }), []);
   }
   console.log(`Posted review as ${auth.login}: ${review.html_url}`);
+  // Approve (👍 on the PR description) when nothing is left to fix, or withdraw an earlier 👍.
+  try {
+    console.log(describeApproval(await syncApproval({ repo, number, auth })));
+  } catch (err) {
+    console.error(`The review was posted, but updating the bot's 👍 failed: ${err.message}. Run approve.mjs --pr ${repo}#${number}.`);
+  }
   return 0;
 };
 
