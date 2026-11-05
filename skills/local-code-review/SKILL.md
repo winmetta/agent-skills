@@ -50,7 +50,7 @@ Follow [references/review-rubric.md](references/review-rubric.md) for what to re
 When the review is a step before a commit (the user asked you to commit, or the project's instructions require a review before every commit), fix the findings without asking, then commit only what is clean:
 
 1. Follow the steps above for the changes going into the commit: the staged changes, or uncommitted work if everything is committed.
-2. Fix every finding kept in step 5, keeping each fix to the problem the finding describes. If a fix needs a decision only the user can make, stop and ask instead of guessing. Stage the fixes too when the scope is staged changes.
+2. Fix every finding kept in step 5, keeping each fix to the problem the finding describes. If a fix needs a decision only the user can make, stop and ask instead of guessing. For a complexity finding, keep the refactor inside the function it names and keep its behaviour the same; if the repository's tests fail afterwards, revert that fix and report the finding instead. A finding left this way does not block the commit: leave it out of later rounds and name it in the reply. Stage the fixes too when the scope is staged changes.
 3. Review again, with the same scope, now including the fixes. Repeat until a round has no findings. If the same problem keeps coming back after three rounds, stop, and don't commit: tell the user what is left.
 4. Commit only if the user asked for a commit, or the project's instructions allow it (for example, committing fixes for a pull request's review findings). Say in the reply what each round found and what you fixed.
 
