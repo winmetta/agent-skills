@@ -30,7 +30,7 @@ Only the engine you pass to `--engine` needs to be logged in. `gh auth login` is
   node <skill-dir>/scripts/run-review.mjs --pr <owner>/<repo>#<n> --engine claude|codex [--context ../<other-repo>]... [--post]
   ```
 
-  It checks out the PR head in a sibling worktree `<repo>-pr-<n>`, runs the engine read-only (for Claude: no project settings, hooks or MCP servers from the PR, and only exact `git diff` commands) with [references/review-rubric.md](references/review-rubric.md), validates the findings against [assets/findings.schema.json](assets/findings.schema.json), saves them to the system temp folder, prints a dry run, and removes the worktree. Add `--post` to post; `--keep-worktree` to keep the checkout.
+  It checks out the PR head in a sibling worktree `<repo>-pr-<n>`, runs the engine read-only (for Claude: no project settings, hooks or MCP servers from the PR, and only exact `git diff` commands) with [references/review-rubric.md](references/review-rubric.md), validates the findings against [assets/findings.schema.json](assets/findings.schema.json), rechecks each one in a second read-only run on a mid-tier model at low effort (`sonnet` for Claude, `gpt-6.1-terra` for Codex; `--verify-model` to change, `--skip-verify` to skip) and drops those it rejects, saves them to the system temp folder, prints a dry run, and removes the worktree. Add `--post` to post; `--keep-worktree` to keep the checkout.
 
 - **In this session (when the user asks you to review a PR):** follow the steps below. You do the reviewing; the scripts only post.
 
@@ -46,16 +46,17 @@ Only the engine you pass to `--engine` needs to be logged in. `gh auth login` is
 
    Tell the user you created it. If the repository's own docs say where worktrees go, follow them.
 
-3. **Review** `git diff refs/local-pr-review/base-<n>...HEAD` in the worktree, following [references/review-rubric.md](references/review-rubric.md). Read the callers and the related repositories the user named (or that the diff clearly depends on) before reporting anything. Change no files.
-4. **Write the findings** to a JSON file outside the repositories (e.g. the system temp folder) matching [assets/findings.schema.json](assets/findings.schema.json): a `summary` and a `findings` array. Line numbers are in the PR head version of the file.
-5. **Dry run and show the user:**
+3. **Review** every change in the PR, `git diff refs/local-pr-review/base-<n>...HEAD`, in the worktree, following [references/review-rubric.md](references/review-rubric.md) (the same rubric as `local-code-review`, including its complexity rules). Read the callers and the related repositories the user named (or that the diff clearly depends on) before reporting anything. Change no files.
+4. **Verify each finding** in a fresh context before writing it down: give a checker only the finding and the worktree, and keep it only if the checker confirms it is real, introduced by the PR and meets the rubric's evidence bar. Use a mid-tier model at low reasoning: in Claude Code, a subagent with model `sonnet` and low effort; in Codex, `codex exec -m gpt-6.1-terra -c model_reasoning_effort="low" --sandbox read-only --ephemeral -`. Always use the checker when the agent has subagents or `codex exec`; only an agent with neither may recheck each finding itself in a separate pass, and it must say so.
+5. **Write the findings** to a JSON file outside the repositories (e.g. the system temp folder) matching [assets/findings.schema.json](assets/findings.schema.json): a `summary` and a `findings` array. Line numbers are in the PR head version of the file.
+6. **Dry run and show the user:**
 
    ```bash
    node <skill-dir>/scripts/post-review.mjs --pr <owner>/<repo>#<n> --findings <file> --reviewer <your-agent-name> --head <reviewed-sha> --dry-run
    ```
 
-6. **Post only after the user says yes** (it publishes on the PR): the same command without `--dry-run`; it refuses if the PR head moved since `<reviewed-sha>` (`git rev-parse HEAD` in the worktree), so re-run the review then. Share the review link it prints.
-7. **Clean up:** `git worktree remove ../<repo>-pr-<n>` and `git update-ref -d` both `refs/local-pr-review/*-<n>` refs, unless the user wants to keep them.
+7. **Post only after the user says yes** (it publishes on the PR): the same command without `--dry-run`; it refuses if the PR head moved since `<reviewed-sha>` (`git rev-parse HEAD` in the worktree), so re-run the review then. Share the review link it prints.
+8. **Clean up:** `git worktree remove ../<repo>-pr-<n>` and `git update-ref -d` both `refs/local-pr-review/*-<n>` refs, unless the user wants to keep them.
 
 ## How posting behaves
 

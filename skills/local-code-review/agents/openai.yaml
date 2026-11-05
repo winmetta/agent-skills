@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Code Review"
+  short_description: "Review uncommitted or branch changes before you push"
+  default_prompt: "Use $local-code-review to review my uncommitted changes."
