@@ -77,8 +77,10 @@ test('reviewBody records the head commit and counts', () => {
   assert.match(body, /New findings: 1 high, 1 low\./);
   assert.match(body, /<!-- local-pr-review:head=abcdef1234567890 -->/);
   assert.match(body, /src\/a\.js:99/);
+  assert.match(body, /<!-- local-pr-review:new=2 -->/);
   const empty = reviewBody({ plan: { inline: [], summary: [], skipped: [] }, summary: '', headSha: 'abc' });
   assert.match(empty, /No new findings\./);
+  assert.match(empty, /<!-- local-pr-review:new=0 -->/);
   assert.doesNotMatch(empty, /resolve its thread/);
 });
 

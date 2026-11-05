@@ -60,10 +60,25 @@ Only the engine you pass to `--engine` needs to be logged in. `gh auth login` is
 
 ## How posting behaves
 
-- One review, `event: COMMENT`, pinned to the PR's head commit. It never approves or requests changes; what blocks merging is the branch rule that requires conversations to be resolved (see the setup reference).
+- One review, `event: COMMENT`, pinned to the PR's head commit. It never submits a GitHub approval or requests changes (see [Approval](#approval-) for the 👍); what blocks merging is the branch rule that requires conversations to be resolved (see the setup reference).
 - A finding becomes an inline thread only when its line is inside a diff hunk of a file in the PR; otherwise (other file, other repository, line outside the diff) it is listed in the summary. If GitHub still rejects a line, all findings move to the summary rather than being lost.
 - Each finding carries a hidden fingerprint of its repository, path and title. Re-running on a new push skips findings the bot already posted, even if their thread was resolved, so reword the title if an issue genuinely came back.
-- The summary records the reviewed commit (`<!-- local-pr-review:head=<sha> -->`), so anyone can tell whether the latest push has been reviewed.
+- The summary records the reviewed commit (`<!-- local-pr-review:head=<sha> -->`) and its number of new findings (`<!-- local-pr-review:new=<n> -->`), so anyone can tell whether the latest push has been reviewed.
+
+## Approval (👍)
+
+The bot approves a PR by adding a 👍 reaction to its description when nothing is left to fix: its latest review is for the PR's head commit, that review has no new findings, and no review thread on the PR is unresolved. It is a signal, not a GitHub approving review, so it never meets a "required approvals" rule.
+
+- `post-review.mjs` updates the 👍 after every post.
+- After you fix the findings, the next push is reviewed again. When you resolve the last thread after that review was posted, run the check yourself:
+
+  ```bash
+  node <skill-dir>/scripts/approve.mjs --pr <owner>/<repo>#<n> [--dry-run]
+  ```
+
+- When the conditions stop holding (a new push or new findings), the bot removes its 👍. It leaves merged and closed PRs alone.
+- A finding the review listed only in its summary (outside the diff) has no thread to resolve, so the 👍 cannot wait for it. Address it before approving.
+- If the user's project merges automatically on the 👍, that rule belongs to the project's own agent instructions, not to this skill.
 
 ## Checks
 
