@@ -52,7 +52,7 @@ When the review is a step before a commit (the user asked you to commit, or the 
 1. Follow the steps above for the changes going into the commit: the staged changes, or uncommitted work if everything is committed.
 2. Fix every finding kept in step 5, keeping each fix to the problem the finding describes. If a fix needs a decision only the user can make, stop and ask instead of guessing. Stage the fixes too when the scope is staged changes.
 3. Review again, with the same scope, now including the fixes. Repeat until a round has no findings. If the same problem keeps coming back after three rounds, stop, and don't commit: tell the user what is left.
-4. Commit only if the user asked for a commit. Say in the reply what each round found and what you fixed.
+4. Commit only if the user asked for a commit, or the project's instructions allow it (for example, committing fixes for a pull request's review findings). Say in the reply what each round found and what you fixed.
 
 ## Checks
 
