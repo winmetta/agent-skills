@@ -29,6 +29,11 @@ The format rules for skills, and how each tool finds and installs them, are in `
 6. Bump the plugin version in **both** `plugin.json` files in the same PR, following the rules under Releases. Docs-only or CI-only changes need no bump.
 7. Add the skill to the list in `README.md`.
 8. Open a PR. Its title follows Conventional Commits and ends with the head branch in square brackets (`feat(skills): add <name> [feat/add-<name>]`, `fix(skills): … [fix/…]`, `docs: … [docs/…]`); GitHub then appends the PR number. PRs are squash-merged, so the title and description become the commit.
+9. After it merges, install or refresh the skill on your own machine so your agents use what is on `main`. Copies installed with `npx skills` in `~/.agents/skills/<name>/` (linked from `~/.claude/skills/<name>`) are snapshots and do not follow the repository:
+   - a new skill: `npx skills@latest add winmetta/agent-skills --skill <name> -a claude-code -a codex -g`;
+   - a changed skill: `npx skills@latest update -g`.
+
+   Keep the installed copy made by `npx skills`; don't replace it with a symlink to this checkout, which would make every agent session use whatever branch is checked out. To try a change before it merges, use the checkout's copy directly, for example `node skills/skill-maintainer/scripts/run-triggers.mjs skills/<name> …` or the scripts under `skills/<name>/scripts/`.
 
 ## Releases
 
@@ -38,7 +43,7 @@ The format rules for skills, and how each tool finds and installs them, are in `
   - Bump the major version for a breaking change: a renamed or removed skill, or changed script flags.
 - Before tagging, run `claude plugin validate .`. If a Codex CLI is available, also run `codex plugin marketplace add ./` with a throwaway `CODEX_HOME`.
 - Tag `vX.Y.Z` on `main`, matching the version in the manifests, and publish a GitHub release with notes.
-- `npx skills` installs from the default branch, or a ref the user gives, so `main` must always be releasable.
+- `npx skills` installs from the default branch, or a ref the user gives, so `main` must always be releasable. After tagging, run `npx skills@latest update -g` so your own installed copies match the release.
 
 ## Rules
 
