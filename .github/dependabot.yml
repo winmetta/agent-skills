@@ -1,0 +1,11 @@
+# Dependabot version updates. The schedule is the 1st of every second month at 09:00 UTC.
+# GitHub Actions pinned by commit SHA keep their "# vX.Y.Z" comment, which Dependabot updates too.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: cron
+      cronjob: "0 9 1 */2 *"
+    commit-message:
+      prefix: "chore(ci)"
