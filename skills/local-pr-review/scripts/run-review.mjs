@@ -8,7 +8,7 @@
 //   --out            where to write the findings JSON (default: a file in the system temp folder)
 //   --keep-worktree  leave the PR worktree in place after the review
 //   --verify-model   model for the pass that rechecks each finding, at low effort (default: $LOCAL_PR_REVIEW_VERIFY_MODEL,
-//                    else sonnet / gpt-6.1-terra; if the engine rejects a built-in default, its own default model is used)
+//                    else sonnet / gpt-6.1-terra; if a run on a built-in default fails, it is retried once on the engine's default)
 //   --skip-verify    post the reviewer's findings without rechecking them
 //   --post           post the review as the GitHub App bot; without it, only a dry run is printed
 // The PR head is checked out in a sibling worktree, <repo-dir>-pr-<n>, so the clone itself is untouched.
@@ -28,8 +28,9 @@ export const SCHEMA_PATH = join(here, '..', 'assets', 'findings.schema.json');
 export const VERDICT_SCHEMA_PATH = join(here, '..', 'assets', 'verdicts.schema.json');
 // The verification pass uses a mid-tier model at low reasoning: cheaper than the review, and a second opinion.
 // Claude's 'sonnet' is an alias that follows the current model. Codex has no alias, so its name goes stale:
-// set LOCAL_PR_REVIEW_VERIFY_MODEL or pass --verify-model, and a rejected built-in default falls back to the
-// engine's own default model (see verifyModel and verifyFindings) rather than failing the whole review.
+// set LOCAL_PR_REVIEW_VERIFY_MODEL or pass --verify-model. If a verify run on a built-in default fails for any
+// reason, it is retried once on the engine's own default model (see verifyModel and verifyFindings) rather than
+// failing the whole review.
 export const DEFAULT_VERIFY_MODEL = { claude: 'sonnet', codex: 'gpt-6.1-terra' };
 
 // The verify model and whether it is a built-in default (which may fall back) or the user's explicit choice.
@@ -228,7 +229,8 @@ export const applyVerdicts = (findings, verdicts = []) => {
 };
 
 // Rechecks the findings on the verify model at low effort and returns the checker's verdicts. A built-in model
-// name can go stale, so if the engine rejects it the pass is retried on the engine's own default model; an
+// name can go stale. Codex's error text goes to the terminal, not to this script, so a stale name can't be told apart
+// from other failures: any failure on a built-in default is retried once on the engine's own default model; an
 // explicit choice (flag or LOCAL_PR_REVIEW_VERIFY_MODEL) is the user's, so its error is reported as is.
 const verifyFindings = ({ engine, flag, cwd, findings, baseRef, contextDirs, rubric, outFile }) => {
   const { model, builtIn } = verifyModel({ engine, flag });
@@ -249,7 +251,7 @@ const verifyFindings = ({ engine, flag, cwd, findings, baseRef, contextDirs, rub
     return verify(model);
   } catch (err) {
     if (!builtIn) throw err;
-    console.error(`The verify pass failed with ${model} (${err.message}); retrying with ${engine}'s default model.`);
+    console.error(`The verify pass failed with ${model} (${err.message}); retrying once with ${engine}'s default model, in case ${model} is no longer available.`);
     console.error('Set LOCAL_PR_REVIEW_VERIFY_MODEL or pass --verify-model to choose the model.');
     return verify(null);
   }
