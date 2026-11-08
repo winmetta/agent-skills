@@ -54,5 +54,3 @@ The format rules for skills, and how each tool finds and installs them, are in `
   - never use frontmatter fields only one tool accepts.
 - **Sources:** reference material records where each rule comes from and when it was checked. Re-check before changing a rule, and never copy long passages from other projects' docs.
 - **Commits:** Conventional Commits. Never commit unless asked; never force-push `main`.
-
-`CLAUDE.md` is a symlink to this file.
