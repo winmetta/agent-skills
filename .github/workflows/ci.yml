@@ -31,7 +31,7 @@ jobs:
           case " ${tools} " in *" shfmt "*) echo "shell=true" >>"$GITHUB_OUTPUT" ;; esac
       - name: Install ShellCheck and shfmt
         if: steps.needs.outputs.shell == 'true'
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
           mise_toml: |
             [tools]
