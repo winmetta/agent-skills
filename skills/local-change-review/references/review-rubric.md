@@ -1,6 +1,6 @@
 # Review rubric
 
-Shared by `local-change-review` and `local-pr-review`; the two copies must stay identical.
+Shared by `local-change-review` and `local-pr-review`. Edit the `local-change-review` copy, then run `node scripts/check-shared-files.mjs --fix` in the agent-skills repository to copy it over; `npm run check` fails in CI while the copies differ.
 
 You already know what bugs and security holes look like. This rubric is about what to leave out and how sure to be, because every finding costs the author time to read, check and answer.
 

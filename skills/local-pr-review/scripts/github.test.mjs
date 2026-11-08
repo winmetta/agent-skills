@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, makeAppJwt, parsePr } from './github.mjs';
-import { applyVerdicts, buildPrompt, buildVerifyPrompt, claudeArgs, codexArgs, DEFAULT_VERIFY_MODEL, secretPaths, VERDICT_SCHEMA_PATH, findRemote, parseClaudeOutput } from './run-review.mjs';
+import { applyVerdicts, buildPrompt, buildVerifyPrompt, claudeArgs, codexArgs, CREDENTIAL_RULE, DEFAULT_VERIFY_MODEL, secretPaths, verifyModel, VERDICT_SCHEMA_PATH, findRemote, parseClaudeOutput } from './run-review.mjs';
 
 test('makeAppJwt signs an RS256 token GitHub accepts', () => {
   const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -83,7 +83,18 @@ test('buildPrompt fences the description with an unguessable tag', () => {
 test('claudeArgs denies reading credentials, including a custom App key path', () => {
   const args = claudeArgs({ baseRef: 'b', contextDirs: [], model: null, keyPath: '/keys/app.pem' });
   const denied = args[args.indexOf('--disallowedTools') + 1].split(',');
-  for (const p of ['~/.config/local-pr-review/**', '~/.ssh/**', '~/.config/gh/**', '//keys/app.pem']) assert.ok(denied.includes(`Read(${p})`), p);
+  for (const p of [
+    '~/.config/local-pr-review/**',
+    '~/.ssh/**',
+    '~/.config/gh/**',
+    '~/.azure/**',
+    '~/.pulumi/**',
+    '~/.netrc',
+    '~/.npmrc',
+    '~/.docker/config.json',
+    '//keys/app.pem',
+  ])
+    assert.ok(denied.includes(`Read(${p})`), p);
   assert.ok(secretPaths('relative.pem').every((p) => !p.endsWith('relative.pem')));
 });
 
@@ -96,6 +107,19 @@ test('the verify pass uses the verdict schema and low effort for each engine', (
   assert.deepEqual(codex.slice(codex.indexOf('--model')), ['--model', 'gpt-6.1-terra', '-c', 'model_reasoning_effort="low"', '-']);
   assert.equal(codex[codex.indexOf('--output-schema') + 1], VERDICT_SCHEMA_PATH);
   assert.deepEqual(DEFAULT_VERIFY_MODEL, { claude: 'sonnet', codex: 'gpt-6.1-terra' });
+});
+
+test('both prompts tell the engine not to read credential files', () => {
+  const pr = { title: 't', url: 'u', headRefOid: 'a', baseRefName: 'main', body: '' };
+  assert.match(CREDENTIAL_RULE, /~\/\.azure, .*~\/\.netrc, ~\/\.npmrc/);
+  assert.ok(buildPrompt({ pr, repo: 'o/r', number: 1, baseRef: 'b', contextDirs: [], rubric: 'R' }).includes(CREDENTIAL_RULE));
+  assert.ok(buildVerifyPrompt({ findings: [], baseRef: 'b', rubric: 'R' }).includes(CREDENTIAL_RULE));
+});
+
+test('verifyModel prefers the flag, then the environment, then the built-in default', () => {
+  assert.deepEqual(verifyModel({ engine: 'codex', flag: 'm1', env: { LOCAL_PR_REVIEW_VERIFY_MODEL: 'm2' } }), { model: 'm1', builtIn: false });
+  assert.deepEqual(verifyModel({ engine: 'codex', env: { LOCAL_PR_REVIEW_VERIFY_MODEL: 'm2' } }), { model: 'm2', builtIn: false });
+  assert.deepEqual(verifyModel({ engine: 'codex', env: {} }), { model: DEFAULT_VERIFY_MODEL.codex, builtIn: true });
 });
 
 test('applyVerdicts drops rejected findings and keeps ones without a verdict', () => {
