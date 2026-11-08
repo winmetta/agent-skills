@@ -29,7 +29,7 @@ export const VERDICT_SCHEMA_PATH = join(here, '..', 'assets', 'verdicts.schema.j
 // The verification pass uses a mid-tier model at low reasoning: cheaper than the review, and a second opinion.
 // Claude's 'sonnet' is an alias that follows the current model. Codex has no alias, so its name goes stale:
 // set LOCAL_PR_REVIEW_VERIFY_MODEL or pass --verify-model, and a rejected built-in default falls back to the
-// engine's own default model (see verifyModel and main) rather than failing the whole review.
+// engine's own default model (see verifyModel and verifyFindings) rather than failing the whole review.
 export const DEFAULT_VERIFY_MODEL = { claude: 'sonnet', codex: 'gpt-6.1-terra' };
 
 // The verify model and whether it is a built-in default (which may fall back) or the user's explicit choice.
