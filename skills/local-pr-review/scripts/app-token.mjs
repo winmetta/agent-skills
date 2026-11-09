@@ -2,6 +2,7 @@
 // Checks the GitHub App setup: mints an installation token for one repository and reports the bot login
 // and expiry. The token itself is never printed, so it can't leak into an agent transcript or a log.
 // Usage: app-token.mjs --repo owner/name
+import { realpathSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,4 +24,4 @@ export const main = async (argv) => {
   }
 };
 
-if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) process.exit(await main(process.argv.slice(2)));
+if (resolve(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] ?? '.')) process.exit(await main(process.argv.slice(2)));

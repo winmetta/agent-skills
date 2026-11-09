@@ -13,7 +13,7 @@
 // Needs Node 20+ and a logged-in `claude`.
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync, realpathSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -268,7 +268,7 @@ export const main = async (argv) => {
   }
 };
 
-if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) {
+if (resolve(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] ?? '.')) {
   main(process.argv.slice(2)).then(
     (code) => process.exit(code),
     (err) => {

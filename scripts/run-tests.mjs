@@ -9,7 +9,7 @@
 //            and run nothing. CI uses this to install only what the skills need.
 // Node 20's test runner takes file paths but no globs, so the files are listed explicitly.
 import { spawnSync } from 'node:child_process';
-import { readdirSync } from 'node:fs';
+import { readdirSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -76,4 +76,4 @@ export const main = (argv) => {
 };
 
 // Compare file paths, not URLs: import.meta.url percent-encodes spaces, process.argv[1] does not.
-if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) process.exit(main(process.argv.slice(2)));
+if (resolve(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] ?? '.')) process.exit(main(process.argv.slice(2)));

@@ -15,7 +15,7 @@
 // Needs: git, gh (logged in, for reading the PR), and claude or codex (logged in).
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -329,7 +329,7 @@ export const main = async (argv) => {
   }
 };
 
-if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) {
+if (resolve(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] ?? '.')) {
   main(process.argv.slice(2)).then(
     (code) => process.exit(code),
     (err) => {

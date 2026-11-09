@@ -8,6 +8,7 @@
 // Otherwise it removes a 👍 it left earlier, so a stale approval never outlives a new push or finding.
 // post-review.mjs runs this after every post; run it yourself after resolving the last thread.
 // Usage: approve.mjs --pr owner/repo#123 [--dry-run]
+import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -103,7 +104,7 @@ export const main = async (argv) => {
   return 0;
 };
 
-if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) {
+if (resolve(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] ?? '.')) {
   main(process.argv.slice(2)).then(
     (code) => process.exit(code),
     (err) => {

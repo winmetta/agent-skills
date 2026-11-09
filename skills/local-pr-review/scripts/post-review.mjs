@@ -10,7 +10,7 @@
 //   --reviewer  engine name shown in the summary (e.g. claude, codex)
 //   --dry-run   print what would be posted and post nothing (works with the gh CLI login if no App is set up)
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -282,7 +282,7 @@ export const main = async (argv) => {
   return 0;
 };
 
-if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? '')) {
+if (resolve(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] ?? '.')) {
   main(process.argv.slice(2)).then(
     (code) => process.exit(code),
     (err) => {
