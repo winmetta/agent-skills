@@ -21,7 +21,7 @@ An organization owner opens `https://github.com/organizations/<org>/settings/app
 - **GitHub App name:** what the bot is called on PRs, e.g. `<org>-reviewer`; PRs show it as `<app-name>[bot]`.
 - **Homepage URL:** the organization's site or repository.
 - **Webhook:** untick **Active**. The App only acts when you run the script.
-- **Repository permissions:** **Pull requests: Read and write** (Metadata: Read-only is added automatically). Nothing else; the scripts never read repository contents through the App.
+- **Repository permissions:** **Pull requests: Read and write** and **Issues: Read and write** (Metadata: Read-only is added automatically). Issues is needed only for the bot's 👍: GitHub adds a reaction to a PR description through the issues reactions endpoint. Nothing else; the scripts never read repository contents through the App.
 - **Where can this GitHub App be installed?** Only on this account.
 
 Click **Create GitHub App**. The App's page shows the **App ID** (a number, not the Client ID). Note it.
@@ -79,13 +79,13 @@ node <skill-dir>/scripts/app-token.mjs --repo <owner>/<repo>
 
 Success prints `OK: can act as <app-name>[bot] on <owner>/<repo> (token expires …)`; it never prints the token. If it fails:
 
-| Message                             | Cause and fix                                                                                                                                             |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LOCAL_PR_REVIEW_APP_ID is not set` | Step 4: set it and reload the shell.                                                                                                                      |
-| `private key not found at …`        | The file is not at `~/.config/local-pr-review/app.pem`: move it there or set `LOCAL_PR_REVIEW_APP_KEY`.                                                   |
-| `401`                               | The App ID is wrong (use the App ID, not the Client ID), or the key belongs to another App or was revoked.                                                |
-| `404` on `/installation`            | The App is not installed on that repository: step 2.                                                                                                      |
-| `403` or `Resource not accessible`  | The App lacks **Pull requests: Read and write**: change it on the App's **Permissions & events** page and accept the new permissions on the installation. |
+| Message                             | Cause and fix                                                                                                                                                                                                                                                    |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOCAL_PR_REVIEW_APP_ID is not set` | Step 4: set it and reload the shell.                                                                                                                                                                                                                             |
+| `private key not found at …`        | The file is not at `~/.config/local-pr-review/app.pem`: move it there or set `LOCAL_PR_REVIEW_APP_KEY`.                                                                                                                                                          |
+| `401`                               | The App ID is wrong (use the App ID, not the Client ID), or the key belongs to another App or was revoked.                                                                                                                                                       |
+| `404` on `/installation`            | The App is not installed on that repository: step 2.                                                                                                                                                                                                             |
+| `403` or `Resource not accessible`  | The App lacks **Pull requests: Read and write**, or **Issues: Read and write** (a review posts but the 👍 fails with a 403 on `/issues/<n>/reactions`): change it on the App's **Permissions & events** page and accept the new permissions on the installation. |
 
 ## 6. Run a review
 

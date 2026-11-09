@@ -80,6 +80,7 @@ Then tell the user the PR is ready for their review. **Never merge it**, unless 
 
 The bot approves a PR on its own by adding a 👍 reaction to its description when nothing is left to fix: its latest review is for the PR's head commit, that review has no new findings, and no review thread on the PR is unresolved. It is a signal for the human reviewer, not a GitHub approving review, so it never meets a "required approvals" rule and never merges anything.
 
+- The App needs **Issues: Read and write** as well as Pull requests: without it the 👍 fails with a 403 on `/issues/<n>/reactions` even when the review found nothing. Check this first when the 👍 is missing, and never add the reaction from a person's account instead.
 - `post-review.mjs` updates the 👍 after every post, so a review that finds nothing new, with no thread left unresolved, approves the PR.
 - When you resolve the last thread after the latest review was posted, add the 👍 yourself (`--dry-run` only reports whether it is current):
 

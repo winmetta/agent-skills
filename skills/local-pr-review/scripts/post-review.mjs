@@ -276,7 +276,8 @@ export const main = async (argv) => {
   try {
     console.log(describeApproval(await syncApproval({ repo, number, auth })));
   } catch (err) {
-    console.error(`The review was posted, but updating the bot's 👍 failed: ${err.message}. Run approve.mjs --pr ${repo}#${number}.`);
+    const hint = /\b403\b|not accessible/i.test(err.message) ? ' The App probably lacks "Issues: Read and write" (a PR reaction goes through the issues API): add it on the App\'s Permissions & events page, accept it on the installation, then re-run.' : '';
+    console.error(`The review was posted, but updating the bot's 👍 failed: ${err.message}.${hint} Run approve.mjs --pr ${repo}#${number}.`);
   }
   return 0;
 };
