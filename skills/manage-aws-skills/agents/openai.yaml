@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage AWS Skills"
+  short_description: "Discover and manage AWS skills using current guidance"
+  default_prompt: "Use $manage-aws-skills to discover current AWS toolkit usage and manage the AWS skills I need."
