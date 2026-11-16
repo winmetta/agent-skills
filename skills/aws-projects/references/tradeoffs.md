@@ -64,7 +64,7 @@ Checklist for the user (from `activate-advanced-features.html`):
 
 1. Tell team members; their console view changes.
 2. Review each project's spend and stop idle or fluctuating resources, because spend limits go away.
-3. Decide on a management account root email they control, then set its root password and MFA right after activation.
+3. Choose the management account's root email: one they will keep for account recovery, and that no AWS account uses yet. In AWS Settings on 2026-11-16, with the Builder ID email entered, which was already another AWS account's root email, the page showed "already associated with an existing AWS account" and asked for a different one; the docs don't mention this. Use a dedicated address, or try a plus alias of the same mailbox (`name+project-aws@example.com`) if the mail provider delivers those; whether AWS accepts a plus alias here is not verified. Right after activation, set its root password with "Forgot your password?" and turn on MFA (`set-root-user-password-management-account.html`).
 4. Plan Regions and edit the `RegionFloor` SCP statement before creating resources elsewhere.
 5. Remove AWS's starter rules file from the agent's instructions; from then on, section 9 of [limitations.md](limitations.md) describes the account.
 6. Add an AWS Budget with alerts.
