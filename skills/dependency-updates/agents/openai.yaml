@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dependency Updates"
+  short_description: "Dependabot plus a weekly check for pinned runtimes and CLIs"
+  default_prompt: "Use $dependency-updates to set up Dependabot and a version check for this repository."

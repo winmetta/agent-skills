@@ -1,0 +1,59 @@
+name: Version check
+
+# Weekly check of the versions Dependabot can't update (runtimes and CLIs in
+# mise.toml, .tool-versions, .nvmrc, engines, ...), listed in
+# .github/version-check.json. Opens or updates one issue while something needs
+# attention and closes it when everything is current. A failed lookup fails the
+# run and leaves the issue as it is.
+on:
+  schedule:
+    - cron: '0 13 * * 1' # Mondays 13:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: version-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      TITLE: Outdated versions
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+      - name: Check versions
+        id: check
+        run: |
+          set +e
+          node scripts/check-versions.mjs > report.md
+          status=$?
+          set -e
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -ge 2 ]; then exit "$status"; fi
+      - name: Open, update or close the issue
+        env:
+          STATUS: ${{ steps.check.outputs.status }}
+        run: |
+          number="$(gh issue list --state open --author 'app/github-actions' \
+            --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == env.TITLE)) | .[0].number // empty")"
+          if [ "$STATUS" = 1 ]; then
+            if [ -n "$number" ]; then
+              gh issue edit "$number" --body-file report.md
+            else
+              gh issue create --title "$TITLE" --body-file report.md
+            fi
+          elif [ -n "$number" ]; then
+            gh issue close "$number" --comment "$(cat report.md)"
+          fi

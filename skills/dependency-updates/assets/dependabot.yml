@@ -1,0 +1,37 @@
+# Dependabot opens weekly, grouped PRs for package dependencies and GitHub
+# Actions. Runtimes and CLIs pinned in mise.toml, .tool-versions, .nvmrc or
+# engines are not covered: the Version check workflow reports them in an issue.
+# Keep one entry per ecosystem the repository really uses.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: America/Los_Angeles
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      # @types/node follows the Node.js major, which the Version check reports.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: America/Los_Angeles
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']
