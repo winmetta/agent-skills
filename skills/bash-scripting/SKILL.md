@@ -16,7 +16,8 @@ Write Bash that is modular, readable and checked. Start from [assets/script-temp
    - Generic helpers (`log`, `die`, `require_cmd`) are the reusable part. Reuse the repo's existing helper library if it has one instead of redefining them.
    - Pass data through arguments and stdout, not globals. Declare function variables with `local`; use `readonly` for constants.
 3. **Be defensive.** `set -euo pipefail` after the shebang (`#!/usr/bin/env bash`). Quote every expansion (`"${var}"`). Use `[[ ]]` over `[ ]`, `$(...)` over backticks, `printf` over `echo` for anything with data. Send errors to stderr and exit non-zero. Check required commands up front. Never `eval` input or build commands from strings: use arrays.
-4. **Comment why, not what.** A header line saying what the script does and its usage; a comment only where the reason is not obvious.
+4. **Give it a help screen.** A script that takes flags or arguments gets `-h, --help` and a `usage()` laid out like `mise --help`: summary, `Usage:`, then `Commands:`, `Arguments:`, `Flags:` and `Examples:` (each example starting with `$ `), every section's descriptions aligned in one column. Help goes to stdout with exit `0`; usage errors go to stderr with exit `2`. Read [references/usage-help.md](references/usage-help.md) for the layout and spacing rules before writing or changing one.
+5. **Comment why, not what.** A header line saying what the script does and its usage; a comment only where the reason is not obvious.
 
 ## Validate and format (always, before reporting done)
 
