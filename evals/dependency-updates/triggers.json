@@ -1,0 +1,15 @@
+[
+  { "query": "add dependabot to this repo, it has a Next.js app and a Python api folder", "should_trigger": true },
+  { "query": "how do we keep our npm packages and node version up to date automatically?", "should_trigger": true },
+  { "query": "set up something that tells us when the Node LTS or terraform CLI in mise.toml gets outdated", "should_trigger": true },
+  { "query": "we want to drop Renovate, replace it with something built into GitHub", "should_trigger": true },
+  { "query": "this new repo has no dependency update setup yet, please add one", "should_trigger": true },
+  { "query": "check whether the versions pinned in .tool-versions and .nvmrc are behind and open an issue weekly", "should_trigger": true },
+  { "query": "configure dependabot to group minor and patch updates and ignore typescript 7", "should_trigger": true },
+  { "query": "merge the open dependabot PR #42 after CI passes", "should_trigger": false },
+  { "query": "upgrade react from 18 to 19 and fix the breaking changes", "should_trigger": false },
+  { "query": "write a GitHub Actions workflow that deploys the site to S3 on push to main", "should_trigger": false },
+  { "query": "run npm audit and tell me which vulnerabilities are critical", "should_trigger": false },
+  { "query": "review my staged changes to package.json before I commit", "should_trigger": false },
+  { "query": "write the PR description for chore/bump-deps", "should_trigger": false }
+]

@@ -1,0 +1,20 @@
+{
+  "checks": [
+    {
+      "name": "Node.js",
+      "latest": { "source": "node-lts" },
+      "match": "major",
+      "pins": [
+        { "file": "mise.toml", "mise": "node" },
+        { "file": "package.json", "json": ["engines", "node"] },
+        { "file": "package.json", "json": ["devDependencies", "@types/node"] }
+      ]
+    },
+    {
+      "name": "Pulumi CLI",
+      "latest": { "source": "github-release", "repo": "pulumi/pulumi" },
+      "match": "exact",
+      "pins": [{ "file": "mise.toml", "mise": "pulumi" }]
+    }
+  ]
+}
