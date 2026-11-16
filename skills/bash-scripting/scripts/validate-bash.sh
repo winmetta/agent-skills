@@ -1,14 +1,45 @@
 #!/usr/bin/env bash
 # Validate and format Bash scripts: bash -n, ShellCheck, then shfmt.
-#
-# Usage: validate-bash.sh [--check] <file.sh>...
-#   default   shfmt rewrites the files in place (-w), then they are checked
-#   --check   report only; shfmt shows a diff (-d) and no file is changed
-# Exit codes: 0 all clean, 1 a check failed, 2 a tool is missing or usage error.
-# shfmt with no style flags reads .editorconfig, so the repo's own indent settings win.
+# Run with -h for usage. shfmt with no style flags reads .editorconfig, so the repo's own indent
+# settings win.
 set -euo pipefail
 
 readonly SCRIPT_NAME="${0##*/}"
+
+# Help layout: see references/usage-help.md in this skill.
+usage() {
+    cat <<USAGE
+Validate and format Bash scripts with bash -n, ShellCheck and shfmt
+
+By default shfmt rewrites each file in place, then all checks run. shfmt reads
+.editorconfig, so the repository's indent settings win. Exits 0 when every file
+is clean, 1 when a check fails, and 2 for a usage error or a missing tool.
+
+Usage: ${SCRIPT_NAME} [FLAGS] <FILE>...
+
+Arguments:
+  <FILE>...  Bash scripts to check
+
+Flags:
+      --check  Report only: shfmt prints a diff and no file is changed
+  -h, --help   Print help
+
+Examples:
+    \$ ${SCRIPT_NAME} script.sh
+
+    \$ ${SCRIPT_NAME} --check scripts/*.sh
+USAGE
+}
+
+# Report a usage error on stderr and exit 2.
+usage_error() {
+    log "${SCRIPT_NAME}: error: $*"
+    log ""
+    log "Usage: ${SCRIPT_NAME} [FLAGS] <FILE>..."
+    log ""
+    log "For more information, try '--help'."
+    exit 2
+}
 
 log() { printf '%s\n' "$*" >&2; }
 
@@ -55,19 +86,36 @@ validate_file() {
     return "${status}"
 }
 
-main() {
-    local shfmt_flag="-w" file status=0
-    if [[ "${1:-}" == "--check" ]]; then
-        shfmt_flag="-d"
+# Set SHFMT_FLAG and FILES from the command line. Flags and files can come in any order.
+parse_args() {
+    SHFMT_FLAG="-w"
+    FILES=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        --check) SHFMT_FLAG="-d" ;;
+        --)
+            shift
+            break
+            ;;
+        -?*) usage_error "unknown flag: $1" ;;
+        *) FILES+=("$1") ;;
+        esac
         shift
-    fi
-    if [[ $# -eq 0 ]]; then
-        log "Usage: ${SCRIPT_NAME} [--check] <file.sh>..."
-        return 2
-    fi
+    done
+    [[ $# -eq 0 ]] || FILES+=("$@")
+    [[ ${#FILES[@]} -gt 0 ]] || usage_error "no <FILE> given"
+}
+
+main() {
+    local file status=0
+    parse_args "$@"
     require_tools || return 2
-    for file in "$@"; do
-        validate_file "${file}" "${shfmt_flag}" || status=1
+    for file in "${FILES[@]}"; do
+        validate_file "${file}" "${SHFMT_FLAG}" || status=1
     done
     return "${status}"
 }
