@@ -1,7 +1,10 @@
 // Run with: node --test skills/dependency-updates/scripts/check-versions.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compare, isOk, readPin, report, status, validate, versionParts } from './check-versions.mjs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { compare, isOk, main, readPin, report, status, validate, versionParts } from './check-versions.mjs';
 
 test('versionParts reads the first version of a value or range', () => {
   assert.deepEqual(versionParts('24'), [24]);
@@ -37,6 +40,15 @@ test('status compares by major, minor or the exact version', () => {
   assert.equal(status(null, 'v26.13.1', 'major'), 'missing');
 });
 
+test('status treats a support floor with no upper bound as current', () => {
+  assert.equal(status('>=20', 'v26.13.1', 'major'), 'current');
+  assert.equal(status('>= 20.11', 'v26.13.1', 'minor'), 'current');
+  assert.equal(status('>=v26', 'v26.13.1', 'major'), 'current');
+  assert.equal(status('>=27', 'v26.13.1', 'major'), 'ahead');
+  assert.equal(status('>=20 <21', 'v26.13.1', 'major'), 'behind');
+  assert.equal(status('^20 || >=22', 'v26.13.1', 'major'), 'behind');
+});
+
 test('validate reports each config problem', () => {
   assert.deepEqual(validate({ checks: [{ name: 'Node.js', latest: { source: 'node-lts' }, pins: [{ file: 'mise.toml' }] }] }), []);
   const errors = validate({
@@ -48,6 +60,46 @@ test('validate reports each config problem', () => {
   assert.equal(errors.length, 6);
   assert.match(errors.join('\n'), /used twice/);
   assert.deepEqual(validate({}), ['"checks" must be a non-empty array']);
+});
+
+test('validate rejects pin fields of the wrong type', () => {
+  const check = (pins) => validate({ checks: [{ name: 'Node.js', latest: { source: 'node-lts' }, pins }] });
+  assert.deepEqual(check([{ file: 'package.json', json: 'engines.node' }]), [
+    'checks[0] (Node.js): pins[0]: "json" must be a non-empty array of strings',
+  ]);
+  assert.match(check([{ file: 'package.json', json: ['engines', 1] }]).join(), /"json" must be/);
+  assert.match(check([{ file: 'mise.toml', mise: ['node'] }]).join(), /"mise" must be a non-empty string/);
+  assert.match(check([{ file: '.tool-versions', tool: 1 }]).join(), /"tool" must be/);
+  assert.match(check([{ file: 'Dockerfile', regex: '(' }]).join(), /not a valid regular expression/);
+  assert.match(check([{ file: '.nvmrc', label: {} }]).join(), /"label" must be/);
+  assert.match(check([{ file: ['mise.toml'] }]).join(), /"file" must be/);
+  assert.match(check(['mise.toml']).join(), /pins\[0\]: must be an object/);
+  assert.match(check([{ file: 'mise.toml', mise: 'node', tool: 'nodejs' }]).join(), /at most one of .*found mise, tool/);
+});
+
+test('main exits 2 with no report on a bad pin or an unexpected error', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'check-versions-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const errors = [];
+  const logs = [];
+  t.mock.method(console, 'error', (...args) => errors.push(args.join(' ')));
+  t.mock.method(console, 'log', (...args) => logs.push(args.join(' ')));
+
+  const bad = join(dir, 'bad.json');
+  const pins = [{ file: 'package.json', json: 'engines.node' }];
+  writeFileSync(bad, JSON.stringify({ checks: [{ name: 'Node.js', latest: { source: 'node-lts' }, pins }] }));
+  assert.equal(await main(['--config', bad]), 2);
+  assert.match(errors.join('\n'), /"json" must be a non-empty array of strings/);
+
+  const good = join(dir, 'good.json');
+  writeFileSync(good, JSON.stringify({ checks: [{ name: 'Node.js', latest: { source: 'node-lts' }, pins: [{ file: '.nvmrc' }] }] }));
+  t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => [{ version: 'v26.13.1', lts: 'Lithium' }] }));
+  t.mock.method(console, 'log', () => {
+    throw new Error('EPIPE');
+  });
+  assert.equal(await main(['--config', good]), 2);
+  assert.match(errors.join('\n'), /Unexpected error: Error: EPIPE/);
+  assert.deepEqual(logs, []);
 });
 
 const config = {
