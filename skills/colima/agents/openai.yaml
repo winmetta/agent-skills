@@ -1,0 +1,4 @@
+interface:
+  display_name: "Colima on Apple Silicon"
+  short_description: "Run and troubleshoot Colima on macOS ARM64"
+  default_prompt: "Use $colima to inspect and configure Colima on macOS ARM64."

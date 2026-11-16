@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Set up Colima on my M3 Mac for native Docker development and occasional Linux AMD64 tests.",
+    "should_trigger": true
+  },
+  {
+    "query": "My Go AMD64 binary only crashes under Colima emulation. Compare Rosetta and QEMU without changing default.",
+    "should_trigger": true
+  },
+  {
+    "query": "The Colima VM is Broken after reboot; preserve my database volumes while diagnosing it.",
+    "should_trigger": true
+  },
+  {
+    "query": "A named Colima profile works but Docker Compose reaches the wrong socket on macOS.",
+    "should_trigger": true
+  },
+  {
+    "query": "Plan a bootstrap for Colima that checks readiness and keeps the active Docker context unchanged.",
+    "should_trigger": true
+  },
+  {
+    "query": "Host edits are invisible to my file watcher inside a Colima bind mount on Apple Silicon.",
+    "should_trigger": true
+  },
+  {
+    "query": "My Apple Silicon Colima setup runs x86 containers very slowly; inspect the VM architecture and translator.",
+    "should_trigger": true
+  },
+  {
+    "query": "How can I grow the disk on an existing Colima profile without pruning images?",
+    "should_trigger": true
+  },
+  {
+    "query": "Docker Desktop on an M2 Mac cannot reach its daemon; diagnose its context and socket.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up OrbStack for AMD64 containers on Apple Silicon.",
+    "should_trigger": false
+  },
+  {
+    "query": "Tune QEMU full-system emulation on a Linux server with no Colima installed.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix a native Linux AMD64 Go crash that also happens on bare metal; no emulation is involved.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review this Dockerfile for cache efficiency; our backend is Docker Desktop.",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure a plain Lima VM using limactl on macOS; do not add Colima.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain how Rosetta runs a macOS Intel application on my M3 Mac.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a macOS ARM64 GitHub Actions build matrix for a Rust CLI, with no containers.",
+    "should_trigger": false
+  }
+]
