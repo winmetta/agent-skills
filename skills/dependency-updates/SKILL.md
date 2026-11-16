@@ -19,7 +19,7 @@ Use only the parts the repository needs. A repo with no runtime pins needs only 
 3. **Write `.github/dependabot.yml`.** Start from [assets/dependabot.yml](assets/dependabot.yml). Add one `updates` entry per ecosystem, with `directories` listing every folder that has that manifest. Read [references/dependabot.md](references/dependabot.md) for the ecosystem names, grouping, `ignore` and the gotchas. Each `ignore` entry needs a comment that says why and the date it was checked, so someone can later tell when to remove it.
 4. **Add the version check if step 2 found pins.**
    - Copy [scripts/check-versions.mjs](scripts/check-versions.mjs) to `scripts/check-versions.mjs` in the repo, unchanged, so it can be refreshed from this skill later.
-   - Write `.github/version-check.json` from [assets/version-check.json](assets/version-check.json). Add one check per runtime or CLI, listing every file that pins it (the config format is below).
+   - Write `.github/version-check.json` from [assets/version-check.json](assets/version-check.json). Add one check per runtime or CLI, listing every file that pins the version the project runs on (the config format is below). List `engines` only when it pins that version (`"24"`, `"24.x"`, `">=24 <25"`). A `>=` support floor such as `">=20"` says which versions still work, not which one to run, so leave it out: it counts as current while the latest version satisfies it, and moving it is a support decision, not an update.
    - Copy [assets/version-check.yml](assets/version-check.yml) to `.github/workflows/version-check.yml`. If the repo pins the latest action version some other way (by full SHA, or a newer major), follow the repo.
    - Exclude whatever the check owns from Dependabot, to avoid two sources of truth. For example, ignore `@types/node` majors, which follow the Node.js major.
 5. **Verify** before you commit:
@@ -46,7 +46,9 @@ Use only the parts the repository needs. A repo with no runtime pins needs only 
   - `json` (a key path, e.g. `["engines", "node"]`);
   - `regex` (the first capture group, e.g. `"^FROM node:(\\d+)"`).
 
-  With none of them, the whole file is the value (`.nvmrc`). Add `label` to rename the row.
+  With none of them, the whole file is the value (`.nvmrc`). Add `label` to rename the row. `file`, `mise`, `tool`, `regex` and `label` are strings and `json` is an array of strings; the script exits 2 on anything else.
+
+A pinned range is compared by its first number, so `">=24 <25"` counts as 24. A support floor with no upper bound (`">=20"`) is never `behind`: it is `current` while the latest version satisfies it, and `ahead` if it is above the latest.
 
 Each row's status is one of:
 

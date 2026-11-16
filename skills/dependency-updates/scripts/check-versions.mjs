@@ -7,7 +7,8 @@
 //   --config  defaults to .github/version-check.json. Pin paths in it are
 //             relative to the current directory (run from the repository root).
 // Prints a Markdown report on stdout. Exit codes: 0 everything current,
-// 1 something is behind, ahead or missing, 2 a bad config or a failed lookup.
+// 1 something is behind, ahead or missing, 2 a bad config, a failed lookup or
+// any other error (nothing is printed on stdout then).
 // Set GITHUB_TOKEN to avoid GitHub API rate limits.
 // Needs Node 20 or later and no packages.
 // From the dependency-updates skill: https://github.com/winmetta/agent-skills
@@ -70,12 +71,20 @@ export function readPin(pin, text) {
   return text.trim() || null;
 }
 
+// A support floor with no upper bound: ">=20", ">= 20.11", ">=v20".
+const isFloor = (value) => /^\s*>=?\s*v?\d+(?:\.\d+)*\s*$/.test(value);
+
 // "current", "behind", "ahead", "missing" or "floating" (no number, e.g. "lts").
+// A floor below the latest version is "current": the latest still satisfies it.
 export function status(pinned, latest, match) {
   if (pinned == null) return 'missing';
   const have = versionParts(pinned);
   const want = versionParts(latest);
   if (!have) return 'floating';
+  if (isFloor(pinned)) {
+    const result = status(pinned.replace(/^\s*>=?\s*/, ''), latest, match);
+    return result === 'behind' ? 'current' : result;
+  }
   const length = { major: 1, minor: 2, exact: Math.max(have.length, want.length) }[match];
   for (let i = 0; i < length; i += 1) {
     const a = have[i] ?? 0;
@@ -99,8 +108,37 @@ function checkErrors(check) {
     field && !check.latest[field] && `${source} needs "${field}"`,
     check?.match && !MATCHES.includes(check.match) && `"match" must be one of ${MATCHES.join(', ')}`,
     !pins.length && '"pins" must be a non-empty array',
-    pins.some((pin) => !pin?.file) && 'every pin needs "file"',
+    ...pins.flatMap((pin, i) => pinErrors(pin).map((e) => `pins[${i}]: ${e}`)),
   ].filter(Boolean);
+}
+
+const PIN_KINDS = ['mise', 'tool', 'json', 'regex'];
+const isText = (value) => typeof value === 'string' && value !== '';
+
+// Problems with one pin, so that reading it later can't throw on a wrong type.
+function pinErrors(pin) {
+  if (!pin || typeof pin !== 'object' || Array.isArray(pin)) return ['must be an object'];
+  const kinds = PIN_KINDS.filter((kind) => pin[kind] !== undefined);
+  return [
+    !isText(pin.file) && '"file" must be a non-empty string',
+    ...['mise', 'tool', 'regex', 'label']
+      .filter((key) => pin[key] !== undefined && !isText(pin[key]))
+      .map((key) => `"${key}" must be a non-empty string`),
+    pin.json !== undefined &&
+      !(Array.isArray(pin.json) && pin.json.length && pin.json.every(isText)) &&
+      '"json" must be a non-empty array of strings',
+    isText(pin.regex) && !compiles(pin.regex) && '"regex" is not a valid regular expression',
+    kinds.length > 1 && `use at most one of ${PIN_KINDS.join(', ')} (found ${kinds.join(', ')})`,
+  ].filter(Boolean);
+}
+
+function compiles(pattern) {
+  try {
+    new RegExp(pattern, 'm');
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function validate(config) {
@@ -160,7 +198,18 @@ async function lookup(check) {
   return pick(await response.json());
 }
 
+// Exit code 2 for anything unexpected too: exit 1 would make the workflow
+// replace the issue's body with an empty or partial report.
 export async function main(argv) {
+  try {
+    return await run(argv);
+  } catch (error) {
+    console.error(`Unexpected error: ${error?.stack ?? error}`);
+    return 2;
+  }
+}
+
+async function run(argv) {
   const at = argv.indexOf('--config');
   const configPath = at >= 0 ? argv[at + 1] : '.github/version-check.json';
   if (!configPath || argv.some((a) => a.startsWith('-') && a !== '--config')) {
