@@ -1,0 +1,79 @@
+[
+  {
+    "query": "I signed up for AWS last week with my GitHub login and now I see Projects in settings.aws.com. Can I still deploy my Pulumi stack to us-east-1?",
+    "should_trigger": true
+  },
+  {
+    "query": "pulumi up fails creating the S3 state bucket: explicit deny in a service control policy. The account was created through the new AWS sign-up with a Builder ID. What's going on?",
+    "should_trigger": true
+  },
+  {
+    "query": "should I click 'Activate advanced features' in AWS Settings? I want GitHub Actions to deploy with OIDC",
+    "should_trigger": true
+  },
+  {
+    "query": "our AWS project is on the free plan, is it worth upgrading to the paid plan just to get a spend limit?",
+    "should_trigger": true
+  },
+  {
+    "query": "how do I give my co-founder access to just one project in AWS Settings without giving them billing?",
+    "should_trigger": true
+  },
+  {
+    "query": "iam CreateOpenIDConnectProvider is denied by an SCP in my new AWS account, I'm the only user and I'm admin",
+    "should_trigger": true
+  },
+  {
+    "query": "where do I find which region my AWS project was put in? the console has no region dropdown",
+    "should_trigger": true
+  },
+  {
+    "query": "everything in my AWS project stopped working this morning with AccessDenied, it worked yesterday. I set a $25 limit in AWS Settings billing",
+    "should_trigger": true
+  },
+  {
+    "query": "what are the tradeoffs of staying on AWS's managed organization from the new signup vs activating advanced features for a small nonprofit site?",
+    "should_trigger": true
+  },
+  {
+    "query": "my aws login profile keeps putting resources in the wrong project, I have two projects Bookstore and Blog",
+    "should_trigger": true
+  },
+  {
+    "query": "plan CloudFront + S3 + Route 53 hosting for my portfolio site; the AWS account is a project account in us-east-2",
+    "should_trigger": true
+  },
+  {
+    "query": "aws login says my session expired, how do I get CLI credentials again?",
+    "should_trigger": false
+  },
+  {
+    "query": "set up GitHub Actions OIDC to assume a role in our AWS account 123456789012, we use Control Tower",
+    "should_trigger": false
+  },
+  {
+    "query": "write an SCP for our AWS Organization that denies all regions except eu-west-1",
+    "should_trigger": false
+  },
+  {
+    "query": "create an AWS Budget with an email alert at 80% of $200 for our production account",
+    "should_trigger": false
+  },
+  {
+    "query": "install the essential AWS agent skills for a Lambda and DynamoDB app",
+    "should_trigger": false
+  },
+  {
+    "query": "why is my Lambda function timing out after 3 seconds when it calls DynamoDB?",
+    "should_trigger": false
+  },
+  { "query": "migrate my Lovable app to AWS", "should_trigger": false },
+  {
+    "query": "review our AWS IAM trust policy for the CI deploy role for confused deputy issues",
+    "should_trigger": false
+  },
+  {
+    "query": "set up a new GitHub project board for our sprint planning",
+    "should_trigger": false
+  }
+]
