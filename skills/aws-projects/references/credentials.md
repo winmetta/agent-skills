@@ -23,6 +23,7 @@ Pages: [Login for AWS local development](https://docs.aws.amazon.com/cli/latest/
 ## 2. Profiles, sessions and the right project
 
 - Use one profile per project. The session picked in the browser decides which project the profile's credentials reach, so a profile can silently point at a different project after a later `aws login`. If the chosen session differs from the profile's saved `login_session`, the CLI asks before overwriting it.
+- After advanced features are activated, the sign-in page also lists the management account and the Identity Delegated Admin account. Give the management account its own profile (for example `<name>-mgmt`) and use it only for administration.
 - Before anything that writes (deploys, `pulumi up`, `terraform apply`, CLI calls that create, change or delete), run `aws sts get-caller-identity --profile <name>` and confirm the account ID matches the project the user means (AWS Settings → project → Overview → Additional info shows it). Stop and ask if it doesn't.
 
 ## 3. Tools that can't read login credentials
@@ -45,7 +46,7 @@ Page: [Login credentials provider](https://docs.aws.amazon.com/sdkref/latest/gui
 
 Pages: [Creating OrganizationAccountAccessRole](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_create-cross-account-role.html), `scps-and-rcps-for-projects.html`.
 
-- Project accounts contain an AWS managed role, `AccountFullAccessRole`. In one checked project account, `aws login` sessions were for this role, under the `/managed/` path, with only `AdministratorAccess` attached; confirm with `aws sts get-caller-identity`.
+- Project accounts contain an AWS managed role, `AccountFullAccessRole`. In one checked project account, `aws login` sessions were for this role, under the `/managed/` path, with only `AdministratorAccess` attached; confirm with `aws sts get-caller-identity`. After activation, `aws login` into the management account also returned an `AccountFullAccessRole` session.
 - IAM allows everything, but the Organization's SCPs and RCPs still apply ([limitations.md](limitations.md)). An "explicit deny" error comes from them, not from a missing IAM permission, so adding IAM policies won't help.
 - The `ProtectManagedRoles` SCP denies changing or deleting any role under `role/managed/`, and it stays after advanced features are activated. Don't try to edit or replace the session role.
 - Treat the profile as a full administrator of the project: confirm the account (section 2) and get the user's go-ahead before writes.

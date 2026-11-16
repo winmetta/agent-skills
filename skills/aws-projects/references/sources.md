@@ -28,6 +28,7 @@ Base URL: `https://docs.aws.amazon.com/accounts/latest/reference/`. The guide's 
 - [Login for AWS local development](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html): `aws login`, `login_session`, refresh, cache, `aws logout`, the `credential_process` workaround.
 - [Login credentials provider](https://docs.aws.amazon.com/sdkref/latest/guide/feature-login-credentials.html): which SDKs and tools can read login credentials.
 - [Creating OrganizationAccountAccessRole](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_create-cross-account-role.html): `AccountFullAccessRole` in project accounts, and creating an admin role reachable from the management account.
+- [Why do I receive the EMAIL_ALREADY_EXISTS error](https://repost.aws/knowledge-center/organizations-error-email-already-exists) (AWS Knowledge Center): one account per email, including Amazon.com retail accounts; plus-alias workaround.
 
 ## AWS Agent Toolkit
 
