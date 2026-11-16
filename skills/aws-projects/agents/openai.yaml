@@ -1,0 +1,4 @@
+interface:
+  display_name: "AWS Projects"
+  short_description: "Work within AWS Projects accounts and their limits"
+  default_prompt: "Use $aws-projects to check how my AWS Projects account limits this task."
