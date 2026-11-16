@@ -31,7 +31,7 @@ aws configure get region
 - `get-account-plan-state` shows the plan (`FREE` or `PAID`). An "explicit deny in a service control policy" error on an ordinary action, for an account the user didn't put in an Organization, is another sign.
 - Ask the user whether **advanced features** are active. A sign that they are: the AWS Management Console shows a Region selector and the full service list instead of the simplified project view. After activation the account behaves like a member account of an Organization they control; most of the limits below no longer apply.
 - Get the project's Region from the user (AWS Settings, project Overview, Additional info). Never pick a Region yourself: AWS assigns one from the contact country and the user can't change it.
-- Credentials come from `aws login --profile <name>`, choosing the project's session in the browser, not from `aws configure sso` or access keys. Ask before running `aws login`; it opens a browser and needs the user.
+- Credentials come from `aws login --profile <name>`, choosing the project's session in the browser, not from `aws configure sso` or access keys. Ask before running `aws login`; it opens a browser and needs the user. Read [references/credentials.md](references/credentials.md) when setting up a profile, when an SDK, Terraform or Pulumi finds no credentials, or when asked what the profile is allowed to do.
 
 ## 3. Work within the limits
 
@@ -62,6 +62,7 @@ For "where do I click" questions, use [references/ui-map.md](references/ui-map.m
 
 ## Checks
 
+- Before any write, `aws sts get-caller-identity` with the profile in use showed the account ID of the project the user means: the profile has administrator access to the project (see section 4 of references/credentials.md) and its browser session can point at another project.
 - Every Regional resource you add or change uses the project's Region, and nothing new depends on `us-east-1` beyond the allowed global services.
 - Every service you add is on the user's plan list (re-checked on the supported-services page).
 - No IAM identity provider, IAM group or console password is created unless advanced features are active.

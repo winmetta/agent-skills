@@ -68,4 +68,4 @@ Checklist for the user (from `activate-advanced-features.html`):
 4. Plan Regions and edit the `RegionFloor` SCP statement before creating resources elsewhere.
 5. Remove AWS's starter rules file from the agent's instructions; from then on, section 9 of [limitations.md](limitations.md) describes the account.
 6. Add an AWS Budget with alerts.
-7. If the management account needs to reach project accounts, check whether each has `OrganizationAccountAccessRole` and create it where missing.
+7. If the management account needs to reach project accounts, create `OrganizationAccountAccessRole` in each one: project accounts never get it ([credentials.md](credentials.md), section 5).
