@@ -28,6 +28,24 @@ test_no_args_is_usage_error() {
     expect_status "no files is a usage error" 2 bash "${VALIDATE}"
 }
 
+test_help_prints_usage_and_exits_0() {
+    expect_status "--help exits 0" 0 bash "${VALIDATE}" --help
+    if bash "${VALIDATE}" -h 2>/dev/null | grep -q '^Usage: validate-bash.sh \[FLAGS\] <FILE>\.\.\.$'; then
+        echo "ok - -h prints the Usage line on stdout"
+    else
+        echo "not ok - -h did not print the Usage line on stdout"
+        FAILURES=$((FAILURES + 1))
+    fi
+}
+
+test_unknown_flag_is_usage_error() {
+    expect_status "unknown flag is a usage error" 2 bash "${VALIDATE}" --nope "${TMP}/ok.sh"
+}
+
+test_check_flag_after_files() {
+    expect_status "--check works after the files" 0 bash "${VALIDATE}" "${TMP}/ok.sh" --check
+}
+
 test_clean_script_passes() {
     write_file ok.sh '#!/usr/bin/env bash\nset -euo pipefail\n\nmain() {\n\techo "hi"\n}\n\nmain "$@"\n'
     expect_status "clean script passes" 0 bash "${VALIDATE}" --check "${TMP}/ok.sh"
@@ -74,7 +92,10 @@ test_missing_tool_exits_2() {
 
 main() {
     test_no_args_is_usage_error
+    test_help_prints_usage_and_exits_0
+    test_unknown_flag_is_usage_error
     test_clean_script_passes
+    test_check_flag_after_files
     test_shellcheck_finding_fails
     test_syntax_error_fails
     test_check_mode_reports_format_without_changing
