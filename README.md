@@ -82,6 +82,8 @@ codex plugin marketplace add winmetta/agent-skills
 
 Then install `agent-skills` from the plugin list. This channel follows OpenAI's plugin docs but hasn't been checked with the Codex CLI yet; if it fails, install the skills you want with `npx skills` above, which supports Codex.
 
+Both marketplaces are served from this GitHub repository. A merged catalog change updates their source; a GitHub release records the version and release notes. Updating the local marketplace or an installed plugin is a separate step. Maintainers follow the [release and distribution workflow](AGENTS.md#releases), including explicit release authorization and verification of the installed version. There is no separate upload to an OpenAI or Anthropic repository in this setup.
+
 ## Use
 
 - Claude Code: ask for what you need ("create a skill that …", "write the PR description"), or run the skill as a slash command, for example `/skill-maintainer` (`/agent-skills:skill-maintainer` when installed as the plugin).

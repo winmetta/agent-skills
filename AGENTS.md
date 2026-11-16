@@ -41,9 +41,28 @@ The format rules for skills, and how each tool finds and installs them, are in `
   - Bump the minor version for a new skill or a behaviour change.
   - Bump the patch version for a fix.
   - Bump the major version for a breaking change: a renamed or removed skill, or changed script flags.
-- Before tagging, run `claude plugin validate .`. If a Codex CLI is available, also run `codex plugin marketplace add ./` with a throwaway `CODEX_HOME`.
-- Tag `vX.Y.Z` on `main`, matching the version in the manifests, and publish a GitHub release with notes.
-- `npx skills` installs from the default branch, or a ref the user gives, so `main` must always be releasable. After tagging, run `npx skills@latest update -g` so your own installed copies match the release.
+- **Finish the distribution follow-up after each merged skill change.** A merge, a GitHub release, and a local installation update are separate outcomes. Prepare the release below and report any step left pending; do not describe refreshing an installed skill as publishing a release. Docs-only and CI-only changes that do not change an installed skill need no new release.
+- **Release authorization:** publishing a tag or GitHub release requires an explicit user request covering that release. A request to commit, push or open and merge a PR does not by itself authorize a release. Prepare the exact version, source commit and release notes first, then request authorization if it is missing. Do not retag or replace an existing published release.
+
+### Publish a GitHub release
+
+1. Work from a clean checkout of the updated default branch after the PR has merged. Confirm the bot reviewed the merged PR head and CI passed. Record the release commit SHA; do not release from an unmerged feature branch.
+2. Read the version from both plugin manifests and confirm they match. Check existing tags and GitHub releases with `gh release list --repo winmetta/agent-skills` and `git ls-remote --tags origin`. If that version already exists, inspect its target and contents; do not overwrite it or silently publish a different commit under it. Resolve a needed version bump through the normal PR process.
+3. Run `npm test`, `npm run check` and `claude plugin validate .` on the release commit. Validate both marketplace manifests and their plugin paths. If Codex is available, check its current `plugin marketplace` help and validate local marketplace registration using an isolated test configuration; do not replace the developer's configured marketplace with a local checkout. Report missing validation tools or failures before publishing.
+4. Prepare release notes describing the installed-skill changes since the previous published release, including breaking changes and validation. Use a file for the notes. Publish only after release authorization is present. Create and push `vX.Y.Z` at the verified release SHA, using the repository's verified remote; never force-push a tag. Then run `gh release create vX.Y.Z --repo winmetta/agent-skills --verify-tag --target RELEASE_SHA --title vX.Y.Z --notes-file NOTES_FILE`, substituting the actual version, SHA and notes path.
+5. Verify the published release URL, tag target, version and notes against the intended commit. Link the release in the completion reply and state any remaining distribution or local-update steps.
+
+### Make the update available to Codex and Claude Code
+
+Both plugin marketplaces are hosted by **this GitHub repository**: `.agents/plugins/marketplace.json` for Codex and `.claude-plugin/marketplace.json` for Claude Code. Their entries resolve the plugin from this repository's root. Pushing the reviewed change to the default branch updates their source; publishing a GitHub release records a versioned release. There is no separate plugin upload or push to an OpenAI or Anthropic repository in this setup. Submission to an official vendor directory is a separate action and must not be claimed unless it was actually completed.
+
+- Keep both marketplace entries and both plugin manifests valid in the same PR as a skill addition or change. A new skill under `skills/` is shipped by the existing plugin; an existing skill's fix ships through the same channel.
+- For an existing **Claude Code plugin installation**, refresh the configured marketplace with `claude plugin marketplace update winmetta`, then update the installed plugin with `claude plugin update agent-skills@winmetta`. Verify the resulting version and restart the client when required. Check CLI help first if the installed version uses different commands.
+- For an existing **Codex plugin installation**, use `codex plugin marketplace upgrade winmetta` to refresh the configured Git marketplace snapshot, then inspect the plugin manager and apply any offered plugin update. Verify the installed version; a successful marketplace refresh alone does not prove the installed plugin was updated. Check current CLI help instead of inventing an upload or plugin-update command.
+- Update only channels already installed or explicitly requested. Do not install the whole plugin when the developer only uses individually installed skills. `npx skills` reads the default branch unless a ref was specified, so a GitHub release is not needed for it to see a merged change. Follow step 9 above to add a new skill or refresh existing snapshots, and refresh repository-installed copies in their own clean checkouts under their own review/commit rules.
+- Report source publication, GitHub release publication and local installation status separately. If a release or client update is not authorized or cannot be verified, name the pending step instead of saying distribution is complete.
+
+Command syntax and distribution behavior checked on 2026-11-16 against local CLI help, [OpenAI plugin documentation](https://developers.openai.com/plugins/build/plugins) and [Claude Code marketplace documentation](https://code.claude.com/docs/en/plugin-marketplaces). Recheck before changing the workflow.
 
 ## Rules
 
