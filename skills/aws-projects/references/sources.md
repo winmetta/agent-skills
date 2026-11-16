@@ -23,6 +23,13 @@ Base URL: `https://docs.aws.amazon.com/accounts/latest/reference/`. The guide's 
 | `monitor-your-project.html`                                                                | CloudTrail and `onBehalfOf`                                                                       |
 | `close-project.html`, `close-account-new-experience.html`                                  | Closing and the 90-day post-closure period                                                        |
 
+## Credentials
+
+- [Login for AWS local development](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html): `aws login`, `login_session`, refresh, cache, `aws logout`, the `credential_process` workaround.
+- [Login credentials provider](https://docs.aws.amazon.com/sdkref/latest/guide/feature-login-credentials.html): which SDKs and tools can read login credentials.
+- [Creating OrganizationAccountAccessRole](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_create-cross-account-role.html): `AccountFullAccessRole` in project accounts, and creating an admin role reachable from the management account.
+- [Why do I receive the EMAIL_ALREADY_EXISTS error](https://repost.aws/knowledge-center/organizations-error-email-already-exists) (AWS Knowledge Center): one account per email, including Amazon.com retail accounts; plus-alias workaround.
+
 ## AWS Agent Toolkit
 
 - [AWS starter rules](https://github.com/aws/agent-toolkit-for-aws/blob/main/rules/aws-starter-rules.md): the rules file AWS gives agents for this experience. Checked on 2026-11-16; AWS ships no skill for Projects in `aws/agent-toolkit-for-aws`.
@@ -32,11 +39,11 @@ Base URL: `https://docs.aws.amazon.com/accounts/latest/reference/`. The guide's 
 
 - `aws freetier get-account-plan-state` reports the plan; `aws freetier upgrade-account-plan` upgrades it (irreversible: leave it to the user).
 - `aws login help` for login options, such as `--remote` for a machine without a browser.
-- Checked with AWS CLI 2.38.5. The AWS docs pages give no minimum version for `aws login`; AWS's `signing-in-to-aws` skill in the toolkit says 2.32.0.
+- Checked with AWS CLI 2.38.5. `aws login` needs 2.32.0 or later (CLI user guide).
 
 ## Third-party (unverified leads)
 
 Use these only as hints of what to check in the AWS docs.
 
 - [Wiz: Exploring the new AWS sign-up experience](https://www.wiz.io/blog/exploring-the-new-aws-sign-up-experience) on default security settings, such as account-level S3 Block Public Access being off and IAM role manager roles getting broad permissions.
-- [nmfs-opensci/agent-skills#22](https://github.com/nmfs-opensci/agent-skills/issues/22) on payment methods per account and `aws login --remote`.
+- [nmfs-opensci/agent-skills#22](https://github.com/nmfs-opensci/agent-skills/issues/22) on payment methods per account.

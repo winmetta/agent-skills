@@ -64,8 +64,8 @@ Checklist for the user (from `activate-advanced-features.html`):
 
 1. Tell team members; their console view changes.
 2. Review each project's spend and stop idle or fluctuating resources, because spend limits go away.
-3. Decide on a management account root email they control, then set its root password and MFA right after activation.
+3. Choose the management account's root email: one they will keep for account recovery, and that no existing AWS account uses, in any Region or partition, nor any Amazon.com retail account (AWS Knowledge Center, `EMAIL_ALREADY_EXISTS` article). In AWS Settings on 2026-11-16, the Builder ID email, already another AWS account's root email, showed "already associated with an existing AWS account"; a second address failed only at the end, after the confirmation dialog, with "Unable to assign the email address provided to the specified account." A fresh address worked. AWS suggests a plus alias (`name+1@example.com`) if the mail provider delivers those; send a test email first. Right after activation, set its root password with "Forgot your password?" and turn on MFA (`set-root-user-password-management-account.html`).
 4. Plan Regions and edit the `RegionFloor` SCP statement before creating resources elsewhere.
 5. Remove AWS's starter rules file from the agent's instructions; from then on, section 9 of [limitations.md](limitations.md) describes the account.
 6. Add an AWS Budget with alerts.
-7. If the management account needs to reach project accounts, check whether each has `OrganizationAccountAccessRole` and create it where missing.
+7. If the management account needs to reach project accounts, create `OrganizationAccountAccessRole` in each one: project accounts never get it ([credentials.md](credentials.md), section 5).
