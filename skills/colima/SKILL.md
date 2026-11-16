@@ -16,13 +16,13 @@ For setup, missing tools or installation architecture problems, read [references
 
 ## Choose the execution mode
 
-| Need                                   | VM and container choice                                                                 |
-| -------------------------------------- | --------------------------------------------------------------------------------------- |
-| Ordinary local development             | Native `aarch64` VM, VZ, ARM64 container images                                         |
-| Linux AMD64 userspace on Apple Silicon | `aarch64` VZ VM with Rosetta, container platform `linux/amd64`                          |
-| Compare translation engines            | Separate ARM64 profile with Rosetta disabled and binfmt enabled for QEMU user emulation |
-| An actual x86 Linux guest/kernel       | Separate `x86_64` QEMU VM; expect substantially slower execution                        |
-| Release confidence on AMD64 hardware   | Test the exact artifact on native Linux AMD64 as well                                   |
+| Need                                   | VM and container choice                                                                      |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Ordinary local development             | Native `aarch64` VM, VZ, ARM64 container images                                              |
+| Linux AMD64 userspace on Apple Silicon | `aarch64` VZ VM with Rosetta; preserve the original container image platform for comparisons |
+| Compare translation engines            | Separate ARM64 profile with Rosetta disabled and binfmt enabled for QEMU user emulation      |
+| An actual x86 Linux guest/kernel       | Separate `x86_64` QEMU VM; expect substantially slower execution                             |
+| Release confidence on AMD64 hardware   | Test the exact artifact on native Linux AMD64 as well                                        |
 
 Rosetta translates Linux AMD64 processes inside an ARM64 VM. It does not provide an x86 kernel. VZ with Rosetta requires Apple Silicon and macOS 13 or newer; verify current version support. `--platform linux/amd64` selects the image architecture, not the translator. `uname -m` inside a container alone does not prove Rosetta was used.
 
@@ -47,7 +47,7 @@ Use `docker info` as the readiness check, with bounded retries in automation; a 
 
 For SDKs that require `DOCKER_HOST`, discover the Unix socket with `colima status` or context inspection. Pass it only to the relevant process and account for conflicting `DOCKER_CONTEXT`. Do not overwrite `/var/run/docker.sock`, export a guessed default socket globally, or expose an unauthenticated TCP daemon to fix a local client connection.
 
-For an authorized container smoke test, use a trusted image with the requested architecture and an explicit platform. Select and record a tag or digest; pulling an image requires network access. Do not silently change global `DOCKER_DEFAULT_PLATFORM` or buildx settings. Inspect a buildx builder's endpoint separately if builds reach a different daemon.
+For an authorized container smoke test, use a trusted image and an explicit image platform. The image and candidate binary can have different architectures; preserve the original image platform and digest when comparing translators. Pulling an image requires network access. Do not silently change global `DOCKER_DEFAULT_PLATFORM` or buildx settings. Inspect a buildx builder's endpoint separately if builds reach a different daemon.
 
 ## Investigate emulation failures
 
