@@ -21,10 +21,12 @@ Changing `GOGC`, allocator settings or concurrency can narrow a hypothesis. Reco
 
 ## Minimal container pattern
 
-After substituting a verified context, image and binary path, an authorized smoke test can follow this shape:
+Set `IMAGE_PLATFORM` to the original container image's platform (for example `linux/arm64` or `linux/amd64`), independently of the candidate binary's architecture. An AMD64 executable can run through the registered translator inside an ARM64 image when its userspace dependencies are satisfied. For a translator comparison, preserve the original platform and exact image digest; switching to an AMD64 image is a separate experiment. A multi-platform tag alone does not identify the same image across platform selections.
+
+After substituting the verified context, original image platform, image pinned by digest and binary path, an authorized smoke test can follow this shape:
 
 ```sh
-docker --context CONTEXT run --rm --platform linux/amd64 --network none \
+docker --context CONTEXT run --rm --platform IMAGE_PLATFORM --network none \
   --mount "type=bind,src=/absolute/candidate-dir,dst=/candidate,readonly" \
   IMAGE /candidate/program --version
 ```

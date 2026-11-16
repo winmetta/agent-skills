@@ -3,14 +3,15 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "On my Apple Silicon Mac, a Linux AMD64 Go release binary crashes in Colima with normal GC but passes with GOGC=off. The ARM64 guest uses VZ, rosetta false and binfmt true. Propose the next test without changing the default VM.",
+      "prompt": "On my Apple Silicon Mac, a Linux AMD64 Go release binary crashes in Colima with normal GC but passes with GOGC=off. The AMD64 binary was bind-mounted into an ARM64-only Alpine image. The ARM64 guest uses VZ, rosetta false and binfmt true. Propose the next test without changing the default VM.",
       "expected_output": "Inspect current state, propose an isolated Rosetta profile and controlled tests, and keep native AMD64 verification outstanding.",
       "files": [],
       "expectations": [
         "Distinguishes QEMU user-mode, Rosetta and full-system QEMU",
         "Proposes ARM64 VZ with Rosetta and activate=false for an unused profile",
         "Does not accept GOGC=off as a release pass",
-        "Requires the same AMD64 artifact and image across translator comparisons"
+        "Requires the same AMD64 artifact and image across translator comparisons",
+        "Preserves the original ARM64 image platform and digest instead of selecting linux/amd64 based on the binary architecture"
       ]
     },
     {
