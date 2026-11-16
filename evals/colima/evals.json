@@ -1,0 +1,42 @@
+{
+  "skill_name": "colima",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "On my Apple Silicon Mac, a Linux AMD64 Go release binary crashes in Colima with normal GC but passes with GOGC=off. The ARM64 guest uses VZ, rosetta false and binfmt true. Propose the next test without changing the default VM.",
+      "expected_output": "Inspect current state, propose an isolated Rosetta profile and controlled tests, and keep native AMD64 verification outstanding.",
+      "files": [],
+      "expectations": [
+        "Distinguishes QEMU user-mode, Rosetta and full-system QEMU",
+        "Proposes ARM64 VZ with Rosetta and activate=false for an unused profile",
+        "Does not accept GOGC=off as a release pass",
+        "Requires the same AMD64 artifact and image across translator comparisons"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Docker cannot connect on my M2 Mac. Colima lists default as Broken; another profile contains my database. Can you fix it? Do not lose any data.",
+      "expected_output": "Diagnose profile state and Docker endpoint before proposing a targeted repair; obtain approval before forced interruption or deletion.",
+      "files": [],
+      "expectations": [
+        "Inspects profile and context plus environment overrides",
+        "Does not delete or prune data",
+        "Explains forced-stop interruption before requesting approval",
+        "Does not repair the unrelated database profile"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write a plan for a bootstrap that uses a named Colima Docker profile on macOS ARM64, waits for readiness and leaves my active Docker context alone. My repo watcher misses changes from the host.",
+      "expected_output": "Plan explicit profile and context discovery, bounded daemon readiness and scoped watcher diagnosis without unconditional teardown.",
+      "files": [],
+      "expectations": [
+        "Uses activate=false and explicit verified context",
+        "Distinguishes stopped, missing and Broken profiles",
+        "Bounds retries and reports failures",
+        "Does not stop a pre-existing VM or delete profiles in cleanup",
+        "Scopes polling to a tool that supports it and explains its CPU cost"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+# Sources and verification
+
+Checked on 2026-11-16. These notes were written for this skill; the upstream skill was reviewed as a comparison, not vendored. Recheck mutable upstream pages and local help before applying version-sensitive advice.
+
+| Source                                                                                                      | What to verify                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [Colima README](https://github.com/abiosoft/colima/blob/main/README.md)                                     | Supported hosts, runtime choices, client requirements and installation options, including mise                                     |
+| [Colima installation](https://github.com/abiosoft/colima/blob/main/docs/INSTALL.md)                         | Package-manager and binary installation options; check dependencies for the selected method                                        |
+| [Colima FAQ](https://github.com/abiosoft/colima/blob/main/docs/FAQ.md)                                      | Profiles, socket discovery, daemon configuration, mounts, Broken status, resource changes and deletion behavior                    |
+| [Colima configuration template](https://github.com/abiosoft/colima/blob/main/embedded/defaults/colima.yaml) | Creation-only settings, Rosetta, binfmt, mounts and auto-activation; template comments may differ from effective platform defaults |
+| [Colima upstream skill](https://github.com/abiosoft/colima/blob/main/skills/SKILL.md)                       | Broader Colima coverage and links to upstream references; verify consequential claims against CLI help and implementation docs     |
+| [Lima multi-architecture guide](https://lima-vm.io/docs/config/multi-arch/)                                 | Foreign-architecture full VMs versus user-mode translation; Rosetta requirements and compatibility tradeoffs                       |
+| [Docker contexts](https://docs.docker.com/engine/manage-resources/contexts/)                                | Endpoint inspection, explicit context selection and environment overrides                                                          |
+| [Colima releases](https://github.com/abiosoft/colima/releases)                                              | Current stable version and upgrade notes before an installation or upgrade                                                         |
+
+Local read-only verification used Colima v0.10.3: `colima version`, `colima start --help`, `colima list`, and `docker context ls`. Help confirmed `--activate`, `--arch`, `--vm-type`, `--vz-rosetta`, `--binfmt`, `--runtime` and `--profile`; it described binfmt as a no-op with Rosetta enabled. No VM start, repair, container run or installation was performed while authoring this skill. This is command-syntax verification, not a successful Rosetta runtime test.
