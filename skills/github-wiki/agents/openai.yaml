@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Wiki"
+  short_description: "Maintain wiki pages, metadata, and navigation"
+  default_prompt: "Use $github-wiki to create or update a page in this repository's GitHub Wiki and keep its Home and sidebar in sync."
