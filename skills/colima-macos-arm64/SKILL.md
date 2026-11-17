@@ -1,5 +1,5 @@
 ---
-name: colima
+name: colima-macos-arm64
 description: "Set up, operate and troubleshoot Colima on macOS ARM64 (Apple Silicon), including Docker profiles and contexts, VZ with Rosetta for Linux AMD64 containers, QEMU comparisons, mounts and startup failures. Use when Colima backs local containers, an AMD64 binary crashes under emulation, Docker cannot reach a Colima socket, or automation must target the right Colima profile. Excludes Docker Desktop, other container backends and native Linux host administration."
 ---
 
@@ -11,6 +11,7 @@ description: "Set up, operate and troubleshoot Colima on macOS ARM64 (Apple Sili
 2. Check `uname -m`, `sw_vers -productVersion`, `command -v colima`, `command -v docker`, `colima version`, `colima list` and `colima start --help`. This workflow targets Apple Silicon (`arm64`); check for a translated terminal or x86 executable if the host reports `x86_64`. Consult current official docs for the installed version rather than assuming upstream `main` matches it.
 3. Inspect `docker context ls`, `docker context show`, and the selected context with `docker context inspect CONTEXT`. Check whether `COLIMA_HOME`, `COLIMA_PROFILE`, `DOCKER_CONTEXT` or `DOCKER_HOST` overrides the intended target; do not dump the full environment or Docker credential files.
 4. Inspect the chosen profile with `colima --profile PROFILE status`. Configuration normally lives at `${COLIMA_HOME:-$HOME/.colima}/PROFILE/colima.yaml`. Read relevant settings: `arch`, `runtime`, `vmType`, `rosetta`, `binfmt`, mounts and resource limits. A failed status call is diagnostic evidence, not a reason to recreate the VM.
+5. Account for the diagnostic process's permissions. In an agent sandbox, `Operation not permitted`, socket access failures, or even `Broken` / `not running` output may reflect restricted host access. Before diagnosing a VM failure or proposing recovery, follow the read-only comparison in [references/operations.md](references/operations.md#separate-access-failures-from-vm-state). If a reliable check is unavailable, report the profile state as unknown because access is restricted.
 
 For setup, missing tools or installation architecture problems, read [references/operations.md](references/operations.md). Sources and the date they were checked are in [references/sources.md](references/sources.md); refresh relevant sources before making version-sensitive recommendations.
 
