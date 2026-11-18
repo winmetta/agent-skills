@@ -63,6 +63,7 @@ Only the engine you pass to `--engine` needs to be logged in. `gh auth login` is
 - One review, `event: COMMENT`, pinned to the PR's head commit. It never submits a GitHub approval or requests changes (see [Approval](#approval-) for the 👍); what blocks merging is the branch rule that requires conversations to be resolved (see the setup reference).
 - A finding becomes an inline thread only when its line is inside a diff hunk of a file in the PR; otherwise (other file, other repository, line outside the diff) it is listed in the summary. If GitHub still rejects a line, all findings move to the summary rather than being lost.
 - Each finding carries a hidden fingerprint of its repository, path and title. Re-running on a new push skips findings the bot already posted, even if their thread was resolved, so reword the title if an issue genuinely came back.
+- File paths, commands and identifiers in the summary and finding text are written in backticks (the review prompt and `findings.schema.json` ask for it), and the reviewed commit is a link to `https://github.com/<owner>/<repo>/commit/<sha>`, so both are easy to read and click.
 - The summary records the reviewed commit (`<!-- local-pr-review:head=<sha> -->`) and its number of new findings (`<!-- local-pr-review:new=<n> -->`), so anyone can tell whether the latest push has been reviewed.
 
 ## Fix the findings until the bot approves
