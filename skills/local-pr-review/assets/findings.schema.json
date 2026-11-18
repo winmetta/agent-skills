@@ -8,7 +8,7 @@
   "properties": {
     "summary": {
       "type": "string",
-      "description": "Two to five sentences: what the PR does and the overall verdict. No list of findings."
+      "description": "Two to five sentences: what the PR does and the overall verdict. No list of findings. Write every file path, command and identifier in backticks (`scripts/install.sh`), never as plain text."
     },
     "findings": {
       "type": "array",
@@ -25,7 +25,7 @@
           "title": { "type": "string", "description": "One line, under 80 characters, stating the problem." },
           "body": {
             "type": "string",
-            "description": "Markdown: what is wrong, the concrete scenario where it fails, and how to fix it."
+            "description": "Markdown: what is wrong, the concrete scenario where it fails, and how to fix it. Write every file path, command and identifier in backticks."
           },
           "path": {
             "type": ["string", "null"],

@@ -84,6 +84,14 @@ test('reviewBody records the head commit and counts', () => {
   assert.doesNotMatch(empty, /resolve its thread/);
 });
 
+test('reviewBody links the reviewed commit when the repository is known', () => {
+  const plan = { inline: [], summary: [], skipped: [] };
+  const sha = 'abcdef1234567890abcdef1234567890abcdef12';
+  const linked = reviewBody({ plan, summary: '', headSha: sha, repo: 'o/r' });
+  assert.match(linked, /Reviewed commit \[`abcdef123456`\]\(https:\/\/github\.com\/o\/r\/commit\/abcdef1234567890abcdef1234567890abcdef12\)\./);
+  assert.match(reviewBody({ plan, summary: '', headSha: sha }), /Reviewed commit `abcdef123456`\./);
+});
+
 test('validateFindings reports bad entries', () => {
   assert.deepEqual(validateFindings({ summary: '', findings: [finding()] }), []);
   const errors = validateFindings({ findings: [{ severity: 'urgent', line: 0 }] });

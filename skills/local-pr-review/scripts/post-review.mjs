@@ -159,14 +159,17 @@ export const planReview = ({ findings, files, repo, posted = new Set() }) => {
   return plan;
 };
 
-export const reviewBody = ({ plan, summary, headSha, reviewer, inlineFallback = false }) => {
+export const reviewBody = ({ plan, summary, headSha, reviewer, repo, inlineFallback = false }) => {
   const counts = SEVERITIES.map((s) => [s, [...plan.inline.map((i) => i.finding), ...plan.summary].filter((f) => f.severity === s).length])
     .filter(([, n]) => n)
     .map(([s, n]) => `${n} ${s}`);
+  const short = `\`${headSha.slice(0, 12)}\``;
+  // Link the commit when the repository is known, so the reader can open exactly what was reviewed.
+  const commit = repo ? `[${short}](https://github.com/${repo}/commit/${headSha})` : short;
   const lines = [
     `### Automated review${reviewer ? ` (${reviewer})` : ''}`,
     '',
-    `Reviewed commit \`${headSha.slice(0, 12)}\`. ${counts.length ? `New findings: ${counts.join(', ')}.` : 'No new findings.'}`,
+    `Reviewed commit ${commit}. ${counts.length ? `New findings: ${counts.join(', ')}.` : 'No new findings.'}`,
   ];
   if (plan.skipped.length) lines.push(`${plan.skipped.length} finding(s) from an earlier review are not repeated.`);
   if (summary?.trim()) lines.push('', summary.trim());
@@ -252,7 +255,7 @@ export const main = async (argv) => {
     }
     console.error(`Warning: ${msg}`);
   }
-  const body = reviewBody({ plan, summary: doc.summary, headSha, reviewer: values.reviewer });
+  const body = reviewBody({ plan, summary: doc.summary, headSha, repo, reviewer: values.reviewer });
   if (dryRun) {
     printPlan(plan, body);
     if (!auth.login) console.log('\n(Dry run with the gh CLI login: earlier bot findings were not checked for duplicates.)');
@@ -269,7 +272,7 @@ export const main = async (argv) => {
     // GitHub rejected a line position; keep every finding by moving them all into the summary.
     console.error(`Inline comments rejected (${err.message}); posting all findings in the summary instead.`);
     const fallback = { ...plan, summary: [...plan.inline.map((i) => ({ ...i.finding })), ...plan.summary], inline: [] };
-    review = await post(reviewBody({ plan: fallback, summary: doc.summary, headSha, reviewer: values.reviewer, inlineFallback: true }), []);
+    review = await post(reviewBody({ plan: fallback, summary: doc.summary, headSha, repo, reviewer: values.reviewer, inlineFallback: true }), []);
   }
   console.log(`Posted review as ${auth.login}: ${review.html_url}`);
   // Approve (👍 on the PR description) when nothing is left to fix, or withdraw an earlier 👍.
