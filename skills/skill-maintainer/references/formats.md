@@ -1,6 +1,6 @@
-# Skill formats for Claude Code and Codex
+# Skill formats for Antigravity, Claude Code, Codex, and other agents
 
-Checked on 2026-10-25 (sources added 2026-10-26) against the sources at the end. Re-check them before relying on a detail that may have changed (field names, paths, limits).
+Checked on 2026-11-26 against the sources at the end. Re-check them before relying on a detail that may have changed (field names, paths, limits).
 
 ## Contents
 
@@ -14,14 +14,15 @@ Checked on 2026-10-25 (sources added 2026-10-26) against the sources at the end.
 
 ## 1. Where each tool looks
 
-|                           | Codex                                                                            | Claude Code                                                                                                                              |
-| ------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository skills         | `.agents/skills/<name>/SKILL.md`, from the working directory up to the repo root | `.claude/skills/<name>/SKILL.md`, from the working directory up to the repo root                                                         |
-| Personal skills           | `~/.agents/skills/`                                                              | `~/.claude/skills/`                                                                                                                      |
-| Symlinks                  | Followed ("Codex supports symlinked skill folders")                              | Followed ("a `<skill-name>` entry … can be a symlink to a directory elsewhere on disk"); a target reached from several places loads once |
-| Other files in the folder | Read when the instructions point to them                                         | Not loaded automatically; read when `SKILL.md` points to them; scripts are run, not loaded                                               |
+|                           | Antigravity (`agy` CLI, IDE, app)                                                                | Codex (CLI, desktop app, IDE)                                                    | Claude Code                                                                                                                              | Other open-standard agents (GitHub Copilot, OpenCode, Cline, Kilo Code, etc.)                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Repository skills         | `.agents/skills/<name>/SKILL.md` (also `.agent/`, `_agents/`, `_agent/`), CWD up to repo root    | `.agents/skills/<name>/SKILL.md` (also reads `.claude/skills/`, `.codex/skills/`), CWD up to repo root | `.claude/skills/<name>/SKILL.md`, CWD up to repo root                                                                                    | `.agents/skills/<name>/SKILL.md` (standard); some also read tool-specific dirs (e.g. `.opencode/skills/`, `.cline/skills/`, `.kilo/skills/`, `.claude/skills/`) |
+| Personal / global skills  | `~/.gemini/config/skills/` and `~/.agents/skills/`                                               | `~/.agents/skills/` and `~/.codex/skills/`                                       | `~/.claude/skills/`                                                                                                                      | `~/.agents/skills/` (shared), plus `~/.copilot/skills/`, `~/.config/opencode/skills/`, `~/.cline/skills/`, `~/.kilo/skills/` |
+| Instruction files         | `AGENTS.md`, `GEMINI.md`, `.agents/rules/*.md` (CWD up to repo root); `~/.gemini/config/` global | `AGENTS.md`, `AGENTS.override.md` (repo root down to CWD); `~/.codex/` global    | `CLAUDE.md`, `.claude/rules/*.md`, and `AGENTS.md` (native fallback when `CLAUDE.md` is absent, configurable via `/config`)               | `AGENTS.md` at repo root (plus tool-specific rule folders)                                                 |
+| Symlinks                  | Followed; rules deduplicated by resolved path                                                    | Followed ("Codex supports symlinked skill folders")                              | Followed ("a `<skill-name>` entry … can be a symlink to a directory elsewhere on disk"); a target reached from several places loads once | Followed when using `.agents/skills/` or `npx skills`                                                      |
+| Other files in the folder | Loaded on demand when `SKILL.md` references them                                                 | Read when the instructions point to them                                         | Not loaded automatically; read when `SKILL.md` points to them; scripts are run, not loaded                                               | Loaded on demand per the Agent Skills progressive-disclosure spec                                          |
 
-Older guides mention `.codex/skills/`; that path is out of date. Neither tool searches above the repo root, so a skill must live in each repo that needs it.
+None of these tools search above the repo root, so a project skill must live in each repo that needs it.
 
 **The layout this skill uses:** the real folder `.agents/skills/<name>/`, plus `.claude/skills/<name>` → `../../.agents/skills/<name>` (relative, so it works in every clone). `npx skills add` installs skills the same way. `check-skills.mjs` enforces it.
 
@@ -92,15 +93,17 @@ Claude Code also caps `description` (plus `when_to_use`) at 1,536 characters in 
 
 ## 5. Invoking a skill
 
-- Codex: picked automatically from the description, or explicitly with `$skill-name` or the `/skills` list.
+- Antigravity (`agy` CLI, IDE, app): picked automatically from the description, or explicitly with `/<skill-name>`.
+- Codex (CLI, app, IDE): picked automatically from the description, or explicitly with `$skill-name` or the `/skills` list.
 - Claude Code: picked automatically from the description, or explicitly with `/skill-name`.
+- Other open-standard agents (GitHub Copilot, OpenCode, Cline, Kilo Code): picked automatically from the description, or via each harness's explicit skill/slash-command syntax.
 - After adding a skill, start a new session if it does not show up.
 
 ## 6. Installing and sharing skills
 
 | Way | Command | Where it lands | Notes |
 | --- | --- | --- | --- |
-| `npx skills` (vercel-labs/skills, MIT) | `npx skills add owner/repo [--skill <name>] -a claude-code -a codex [-g] [-y]` | Project: one copy in `.agents/skills/<name>/`, symlinked from `.claude/skills/<name>` (or `--copy`). Global with `-g`. | Finds skills in a repo's `skills/<name>/SKILL.md` (and other common folders). Update with `npx skills update [<name>]`. Use `npx skills@latest` to avoid a stale cached version. |
+| `npx skills` (vercel-labs/skills, MIT) | `npx skills add owner/repo [--skill <name>] -a antigravity -a claude-code -a codex [-g] [-y]` | Project: one copy in `.agents/skills/<name>/`, symlinked from `.claude/skills/<name>` (or `--copy`). Global with `-g`. | Finds skills in a repo's `skills/<name>/SKILL.md` (and other common folders). Also supports `-a github-copilot`, `-a opencode`, `-a cline`, etc. Update with `npx skills update [<name>]`. Use `npx skills@latest` to avoid a stale cached version. |
 | Claude Code plugin marketplace | `/plugin marketplace add owner/repo`, then `/plugin install <plugin>@<marketplace>` | Per user, in Claude's plugin cache | Needs `.claude-plugin/marketplace.json` and a plugin with `.claude-plugin/plugin.json` and `skills/`. Plugin skills are namespaced: `/<plugin>:<skill>`. Check with `claude plugin validate <dir>`. |
 | Codex plugin | `codex plugin marketplace add owner/repo`, then install from the plugin list | Per user, in Codex's plugin cache | A portable plugin has a root `plugin.json` and `skills/`; a repo marketplace is `.agents/plugins/marketplace.json`. Codex also reads `.claude-plugin/marketplace.json`. |
 | Checked into a repo | commit the skill folder | `.agents/skills/` (+ the Claude symlink) | Everyone working in the repo gets it. |
@@ -114,7 +117,9 @@ A skill that only one repo needs (its own conventions) belongs in that repo. A s
 - Anthropic `skill-creator` (`SKILL.md`, `references/schemas.md`, `agents/grader.md`, `agents/comparator.md`, `agents/analyzer.md`): https://github.com/anthropics/skills/tree/main/skills/skill-creator (Apache-2.0; read 2026-10-26). Source of the testing, grading, improvement and description-tuning ideas in writing.md and testing.md, which paraphrase it; the `grading.json` field names match it. `scripts/run-triggers.mjs` follows the approach of its `scripts/run_eval.py` (`claude -p` with stream-json output, stopping at the first tool call), rewritten in Node; unlike it, the runner keeps the skill's real name and hides installed copies with `--setting-sources project,local`. Checked against Claude Code's stream-json output and `--setting-sources` behaviour on 2026-11-04.
 - OpenAI `skill-creator`, current `SKILL.md` (principles on scope, freedom, progressive disclosure and forward-testing, and the TODO-placeholder check) and `skill-installer` (read 2026-10-26).
 - Agent Skills specification: https://agentskills.io/specification
-- Claude Code, Skills: https://code.claude.com/docs/en/skills
+- Antigravity Skills & Rules: https://antigravity.google/docs/skills.md and https://antigravity.google/docs/rules.md (checked 2026-11-26)
+- Claude Code, Skills & `AGENTS.md`: https://code.claude.com/docs/en/skills (checked 2026-11-26)
 - Claude Code, plugin marketplaces: https://code.claude.com/docs/en/plugin-marketplaces
 - Codex, build a plugin: https://developers.openai.com/codex/plugins/build
 - `npx skills`: https://github.com/vercel-labs/skills (docs/creating-skills.md, docs/agents.md, docs/commands.md)
+- OpenCode, Cline, Kilo Code, and GitHub Copilot Agent Skills docs (checked 2026-11-26)

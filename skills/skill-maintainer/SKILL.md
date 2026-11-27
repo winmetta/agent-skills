@@ -1,6 +1,6 @@
 ---
 name: skill-maintainer
-description: Create, update, improve, test, rename or remove an agent skill so it works in both Claude Code and Codex (and other agents) from one copy, with a Codex agents/openai.yaml and a .claude/skills symlink. Use when asked to add or write a skill or SKILL.md, turn a workflow into a skill, fix, change or improve an existing skill, test a skill or tune its description so it triggers, set up agents/openai.yaml, make a Claude skill available to Codex or the reverse, or check a repository's skills.
+description: Create, update, improve, test, rename or remove an agent skill so it works in Antigravity, Claude Code, Codex (CLI, desktop app, and IDE), and other open-standard agents (GitHub Copilot, OpenCode, Cline, Kilo Code, etc.) from one copy, with a Codex agents/openai.yaml and a .claude/skills symlink. Use when asked to add or write a skill or SKILL.md, turn a workflow into a skill, fix, change or improve an existing skill, test a skill or tune its description so it triggers, set up agents/openai.yaml, make a skill portable across Antigravity, Claude Code, Codex, or other agent CLIs/IDEs, or check a repository's skills.
 ---
 
 # Skill maintainer
@@ -8,12 +8,12 @@ description: Create, update, improve, test, rename or remove an agent skill so i
 One copy of every skill serves every agent.
 
 - **Project layout** (an ordinary repo, the default):
-  - **Real files** go in `.agents/skills/<name>/`. Codex and most other agents read this path, and `npx skills` installs there.
+  - **Real files** go in `.agents/skills/<name>/`. Antigravity (CLI, IDE, and desktop app), Codex (CLI, desktop app, and IDE), and most other open-standard agents (GitHub Copilot, OpenCode, Cline, Kilo Code, etc.) read this path natively, and `npx skills` installs there.
   - **Claude Code** gets `.claude/skills/<name>`, a relative symlink to `../../.agents/skills/<name>`.
   - Never copy a skill into `.claude/skills/`, and never replace that symlink with a real folder.
 - **Catalog layout** (a repo that publishes skills, like `winmetta/agent-skills`): skills live in one folder, usually `skills/<name>/`, with no symlinks. Pass `--catalog skills` to both scripts.
 
-Both Claude Code and Codex follow symlinked skill folders. References, each read only when needed:
+Antigravity, Claude Code, Codex, and other open-standard agents follow symlinked skill folders. References, each read only when needed:
 
 - [references/formats.md](references/formats.md): the format rules, the `agents/openai.yaml` fields, install options and sources. Read it before writing frontmatter or `openai.yaml`.
 - [references/writing.md](references/writing.md): what makes a skill good (the description, the body, resources, scope and safety). Read it before drafting or reworking a skill.
@@ -23,7 +23,7 @@ Both Claude Code and Codex follow symlinked skill folders. References, each read
 
 The scripts need Node 20 or later and no packages. They find the repo from the working directory, so run them from inside the repo. `<skill-dir>` below means this skill's folder, wherever it is installed. For example:
 - `.agents/skills/skill-maintainer` in a project;
-- `~/.agents/skills/skill-maintainer` for a global install;
+- `~/.agents/skills/skill-maintainer` or `~/.gemini/config/skills/skill-maintainer` for a global install;
 - the plugin's copy.
 
 ## Create a skill
@@ -74,7 +74,7 @@ The scripts need Node 20 or later and no packages. They find the repo from the w
 
    It must pass. `--ignore` skips third-party skills you installed but don't maintain.
 7. **Test it** on two or three realistic requests, as in [references/testing.md](references/testing.md), and fix what goes wrong. Scale this to the skill: a small one needs a quick try, one that many people use or that changes files or systems needs evals with a baseline.
-8. **Try it in both tools** when you can: `/<name>` (or the `/` menu) in Claude Code, and `$<name>` or `/skills` in Codex. A new skill may need a new session to appear.
+8. **Try it in the target tools** when you can: `/<name>` or a matching prompt in Antigravity (`agy` / IDE) and Claude Code, `$<name>` or `/skills` in Codex (CLI, app, or IDE), and the equivalent trigger in other open-standard CLIs (GitHub Copilot, OpenCode, Cline, Kilo Code). A new skill may need a new session to appear.
 9. **Commit** both the skill folder and, in the project layout, the `.claude/skills/<name>` symlink (and its evals, if any). Follow the repo's own commit and formatting rules.
 
 ## Update or improve a skill
