@@ -32,7 +32,7 @@ Every Myanmar syllable MUST follow this exact code-point sequence:
 ### Critical Ordering Examples
 
 - **ကြောင်း** (_reason_): `က` + `ြ` (`U+103C`) + `ေ` (`U+1031`) + `ာ` (`U+102C`) + `င` + `်` (`U+103A`) + `း` (`U+1038`)
-- **မြှင့်** (_to raise_): `မ` + `ြ` (`U+103C`) + `ှ` (`U+103E`) + `ိ` (`U+102D`) + `င` + `်` (`U+103A`) + `့` (`U+1037`)
+- **မြှင့်** (_to raise_): `မ` + `ြ` (`U+103C`) + `ှ` (`U+103E`) + `င` + `်` (`U+103A`) + `့` (`U+1037`)
 - **နိဒ္ဒေသ** (_exposition_): `န` + `ိ` + `ဒ` + `္` (`U+1039`) + `ဒ` + `ေ` (`U+1031`) + `သ`
 
 ---
@@ -47,7 +47,7 @@ Use **Virama** (`္` `U+1039`), NOT Asat (`်` `U+103A`), to stack a consonant
 - **Aspirated clusters:** `က္ခ` (kkha), `ဂ္ဃ` (ggha), `စ္ဆ` (ccha), `ဇ္ဈ` (jjha), `ဋ္ဌ` (ṭṭha), `ဍ္ဎ` (ḍḍha), `တ္ထ` (ttha), `ဒ္ဓ` (ddha), `ပ္ဖ` (ppha), `ဗ္ဘ` (bbha).
 - **Nasal + Stop clusters:** `င်္ဂ` (ṅga), `ဉ္စ` (ñca), `ဉ္ဇ` (ñja), `ဏ္ဍ` (ṇḍa), `န္တ` (nta), `န္ဒ` (nda), `မ္ပ` (mpa), `မ္ဗ` (mba).
 - **Special Pāḷi Ligatures:**
-  - `ဉာ` (`U+1009` + `U+102C`) for _ñā_ (as in `ပညာ` vs `ဝိညာဏ်`).
+  - `ဉာ` (`U+1009` + `U+102C`) for _ñā_ (as in `ဉာဏ်`). Words such as `ပညာ` and `ဝိညာဏ်` use `ည` (`U+100A`), not `ဉ`.
   - `ဋ္ဌ` (`U+100B` + `U+1039` + `U+100C`) for _ṭṭha_ (as in `ကမ္မဋ္ဌာန်း`).
   - `ဏ္ဌ` (`U+100F` + `U+1039` + `U+100C`) for _ṇṭha_.
 
