@@ -66,7 +66,7 @@ When nasal `င` (`U+1004`) precedes another consonant in Pāḷi (e.g., _Saṅg
 Use **Tall `ါ` (`U+102B`)** to prevent visual ambiguity with the base letter `ဝ` (`wa`) after round or open-right consonants:
 
 - **Always use `ါ` after:** `ခ`, `ဂ`, `င`, `ဒ`, `ပ`, `ဝ` (e.g., `ပါရမီ`, `ဒါန`, `သင်္ခါရ`, `မဖြစ်ပါ`).
-- **Exception:** When these consonants carry a medial or stacked subscript that alters their right-side profile, use standard `ာ` (`U+102C`) (e.g., `ပွား`, `ခွာ`, `ကြာ`, `မြန်မာ`).
+- **Exception:** When these consonants carry a medial or stacked subscript that alters their right-side profile, use standard `ာ` (`U+102C`) (e.g., `ပွား`, `ခွာ`). All other consonants (for example `က`, `မ`, `လ`) take `ာ` (e.g., `ကြာ`, `မြန်မာ`, `မင်္ဂလာ`).
 
 ### D. Niggahīta (`ံ` `U+1036`) vs. Final Nasals (`န်` / `မ်`)
 
@@ -93,3 +93,9 @@ Use **Tall `ါ` (`U+102B`)** to prevent visual ambiguity with the base letter `
 3. **Never write Kinzi without both Asat and Virama** (`င` + `်` + `္`).
 4. **Never output Zawgyi-specific encodings**: visually reordered text (E-vowel typed before the consonant), and the legacy glyph code points in `U+1060`–`U+1097` that Zawgyi uses for stacked or width-variant forms. `U+103B` (Ya-pin) is a standard Unicode medial, so keep using it.
 5. **Never confuse `ဉ` (`U+1009`, nya-galay) with `ဥ` (`U+1025`, independent vowel u)**: for example, write `ဥပေက္ခာ` (with `ဥ`) and `ဉာဏ်` / `ပညာ` (with `ဉ` / `ည`).
+
+---
+
+## Sources
+
+Checked 2026-11-26. The code points and the storage order follow the Unicode Standard's Myanmar block (`U+1000`–`U+109F`). The tall-aa, niggahīta and Pāḷi spelling rules are Win Metta's house conventions, supplied by the team and not yet reviewed by a native Burmese reader. When a rule here conflicts with the Unicode chart, follow the chart and report the conflict.
