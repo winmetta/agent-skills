@@ -50,7 +50,7 @@ Pages: `sign-up-for-aws.html`, `scps-and-rcps-for-projects.html`, `connect-ai-co
 - Denied on both plans (`DenyIAMRestrictedActions`): `iam:*Provider*` (OIDC and SAML identity providers, so no GitHub Actions OIDC role), `iam:*LoginProfile*` (console passwords), IAM groups, account aliases, and server and signing certificate uploads. `sso:CreateInstance` is denied by the guardrail statement `BlockOrgEscape` (and `DenySSOCreateInstance` on the Paid plan).
 - IAM users and roles can be created but are for programmatic access only. Access keys are allowed.
 - Humans sign in with their Builder ID and get administrator access to each project they can reach. Don't create roles for team members; AWS manages human access.
-- The CLI gets credentials with `aws login --profile <name>` (AWS's `signing-in-to-aws` skill gives AWS CLI 2.32.0 as the minimum; check with `aws --version`), choosing the project's session in the browser. Sessions last 12 hours and renew without a new browser approval for 90 days. One profile per project; the session chosen in the browser decides which project the credentials are for.
+- The CLI gets credentials with `aws login --profile <name>`, choosing the project's session in the browser. The docs give people administrator access to their projects, limited by the SCPs and RCPs; what the session role looks like is in section 4 of credentials.md. Profiles, SDK support and the session role are in [credentials.md](credentials.md).
 - IAM role manager creates roles automatically; it can be turned off only after activating advanced features.
 
 ## 5. Resource control policy
@@ -93,9 +93,11 @@ Page: `activate-advanced-features.html`.
 
 - The user administers the Organization and can edit or remove most managed SCPs and RCPs, enable more Regions (edit the `RegionFloor` statement), use all services and turn off IAM role manager.
 - Spend limits are removed (paused projects restart) and can't be created again; use AWS Budgets and Cost Anomaly Detection instead.
-- A guardrail SCP (`BlockOrgEscape`, `ProtectManagedRoles`) stays attached to the root and applies to every account, including new ones.
+- A guardrail SCP (`BlockOrgEscape`, `ProtectManagedRoles`) stays attached to the root and applies to every member account, including new ones.
+- The docs say only that "certain" managed policies are removed at activation (the SCP that blocks account management APIs is), not the Free or Paid plan SCPs. In one organization checked right after activation (2026-11-16), the root had three SCPs: `ManagedAccountSecurityControlPolicy` (`BlockOrgEscape`, `ProtectManagedRoles`), `AdvancedModeRegionRestrictionSecurityControlPolicy` (`UsEast1Partitional`, `UsWest2Partitional`, and a `RegionFloor` allowing `us-east-1`, `us-east-2` and `us-west-2`) and `FullAWSAccess`. The plan SCPs were no longer attached, and `iam list-open-id-connect-providers`, denied before activation, succeeded in the project account. The `BudgetsSpendLimit…` SCPs still existed but weren't attached to anything.
+- To see what applies, list the SCPs from the management account: `aws organizations list-policies-for-target --target-id <root-or-account-id> --filter SERVICE_CONTROL_POLICY` for the root (`aws organizations list-roots`), any OU and each account (an account lists only the SCPs attached to it directly), then `aws organizations describe-policy --policy-id <id>`. SCPs never apply to the management account itself, so keep workloads in member accounts. Editing, detaching or deleting an SCP is the user's decision.
 - Project accounts still have no root user email: they can't be removed from the Organization or join another, and their placeholder email can't be changed. To stop using one, close it. Accounts created after activation are normal member accounts.
 - AWS creates an Identity Delegated Admin account for IAM Identity Center; its admin role is used in `us-east-1`.
-- The docs say to create `OrganizationAccountAccessRole` in member accounts you invite. A third-party report says project accounts lack it too; check with `aws iam get-role --role-name OrganizationAccountAccessRole` in the project before relying on it from the management account.
+- Project accounts never get `OrganizationAccountAccessRole`, and their AWS managed `AccountFullAccessRole` can't be assumed from the management account. See section 5 of [credentials.md](credentials.md).
 - Custom roles reached from AWS Settings need a 12-hour session length.
 - Remove AWS's starter rules file from the agent's instructions; it describes the limits that no longer apply.
