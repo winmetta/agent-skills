@@ -1,0 +1,4 @@
+interface:
+  display_name: "Burmese & Pāḷi Orthography"
+  short_description: "Correct Unicode order for Burmese and Pāḷi text"
+  default_prompt: "Use $burmese-pali-orthography to write this Burmese or Pāḷi text in correct Myanmar Unicode."
